@@ -62,9 +62,7 @@
             border-radius: 6px;  
             font-size: 14px;  
         }  
-        .search-box {  
-            position: relative;  
-        }  
+        .search-box { position: relative; }  
         .search-results {  
             position: absolute;  
             top: 100%;  
@@ -168,6 +166,15 @@
         }  
         .status-on { background: #0ecb81; box-shadow: 0 0 10px #0ecb81; }  
         .status-off { background: #f6465d; }  
+        .proxy-notice {  
+            background: #f0b90b22;  
+            border: 2px solid #f0b90b;  
+            border-radius: 8px;  
+            padding: 15px;  
+            margin-bottom: 20px;  
+            text-align: center;  
+        }  
+        .proxy-notice a { color: #f0b90b; font-weight: bold; }  
         @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }  
     </style>  
 </head>  
@@ -183,6 +190,13 @@
                 <button onclick="logout()" class="btn btn-logout">退出</button>  
                 <button onclick="requestNotificationPermission()" class="btn">🔔 开启通知</button>  
             </div>  
+        </div>  
+          
+        <!-- 梯子提示 -->  
+        <div class="proxy-notice">  
+            💡 <strong>提示：</strong> 开启代理可获得实时数据 |   
+            <a href="javascript:void(0)" onclick="testConnection()">🔄 测试连接</a> |  
+            <span id="connection-status">检测中...</span>  
         </div>  
           
         <!-- 控制选项 -->  
@@ -214,7 +228,7 @@
             </div>  
         </div>  
           
-        <!-- 时间范围选择（下载用） -->  
+        <!-- 时间范围选择 -->  
         <div class="card" style="margin-bottom:20px">  
             <h3>📅 下载时间范围</h3>  
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">  
@@ -297,31 +311,53 @@
         function logout() { localStorage.removeItem('cryptoUsername'); window.location.href = 'index.html'; }  
           
         let currentSymbol = 'BTCUSDT', currentInterval = '1h';  
-        let priceHistory = [], isConnected = false;  
+        let priceHistory = [], ws = null, isConnected = false;  
         let allSymbols = [];  
-          
-        // 币安 API 基础 URL（使用 CORS 代理）  
-        const corsProxy = 'https://corsproxy.io/?';  
         const binanceBase = 'https://api.binance.com';  
           
-        // 加载所有币种  
+        // 测试连接  
+        async function testConnection() {  
+            const status = document.getElementById('connection-status');  
+            status.textContent = '测试中...';  
+              
+            try {  
+                ws = new WebSocket('wss://stream.binance.com:9443/ws/' + currentSymbol.toLowerCase() + '@ticker');  
+                  
+                ws.onopen = () => {  
+                    status.textContent = '✅ 可直连（已开代理）';  
+                    status.style.color = '#0ecb81';  
+                    addLog('连接测试成功', 'normal');  
+                };  
+                  
+                ws.onerror = () => {  
+                    status.textContent = '❌ 无法直连（请开代理）';  
+                    status.style.color = '#f6465d';  
+                    addLog('连接测试失败', 'warning');  
+                };  
+                  
+                setTimeout(() => {  
+                    if(ws) ws.close();  
+                }, 3000);  
+                  
+            } catch(error) {  
+                status.textContent = '❌ 无法直连（请开代理）';  
+                status.style.color = '#f6465d';  
+            }  
+        }  
+          
+        // 加载币种  
         async function loadSymbols() {  
             try {  
-                const response = await fetch(corsProxy + encodeURIComponent(binanceBase + '/api/v3/exchangeInfo'));  
+                const response = await fetch(binanceBase + '/api/v3/exchangeInfo');  
                 const data = await response.json();  
                 allSymbols = data.symbols  
                     .filter(s => s.quoteAsset === 'USDT' && s.status === 'TRADING')  
                     .map(s => ({ symbol: s.symbol, base: s.baseAsset }));  
-                console.log('加载币种数量:', allSymbols.length);  
             } catch(error) {  
-                console.error('加载币种失败:', error);  
-                // 默认币种列表  
                 allSymbols = [  
                     {symbol:'BTCUSDT',base:'BTC'},{symbol:'ETHUSDT',base:'ETH'},  
                     {symbol:'BNBUSDT',base:'BNB'},{symbol:'XRPUSDT',base:'XRP'},  
-                    {symbol:'SOLUSDT',base:'SOL'},{symbol:'ADAUSDT',base:'ADA'},  
-                    {symbol:'DOGEUSDT',base:'DOGE'},{symbol:'AVAXUSDT',base:'AVAX'},  
-                    {symbol:'DOTUSDT',base:'DOT'},{symbol:'MATICUSDT',base:'MATIC'}  
+                    {symbol:'SOLUSDT',base:'SOL'},{symbol:'ADAUSDT',base:'ADA'}  
                 ];  
             }  
         }  
@@ -331,20 +367,11 @@
             const input = document.getElementById('symbol-search').value.toUpperCase();  
             const results = document.getElementById('search-results');  
               
-            if(input.length < 1) {  
-                results.classList.remove('show');  
-                return;  
-            }  
+            if(input.length < 1) { results.classList.remove('show'); return; }  
               
             const filtered = allSymbols.filter(s => s.base.includes(input)).slice(0, 20);  
-              
-            if(filtered.length === 0) {  
-                results.innerHTML = '<div class="search-item">未找到</div>';  
-            } else {  
-                results.innerHTML = filtered.map(s =>   
-                    `<div class="search-item" onclick="selectSymbol('${s.symbol}')">${s.base}/USDT</div>`  
-                ).join('');  
-            }  
+            results.innerHTML = filtered.length === 0 ? '<div class="search-item">未找到</div>' :  
+                filtered.map(s => `<div class="search-item" onclick="selectSymbol('${s.symbol}')">${s.base}/USDT</div>`).join('');  
             results.classList.add('show');  
         }  
           
@@ -355,73 +382,87 @@
             document.getElementById('symbol-search').value = symbol.replace('USDT','');  
             document.getElementById('search-results').classList.remove('show');  
             priceHistory = [];  
-            fetchPrice();  
+            connectWebSocket();  
             addLog(`切换币种：${symbol}`, 'normal');  
         }  
           
-        // 切换时间周期  
+        // 切换周期  
         function changeInterval() {  
             currentInterval = document.getElementById('interval-select').value;  
             priceHistory = [];  
-            fetchPrice();  
+            connectWebSocket();  
             addLog(`切换周期：${currentInterval}`, 'normal');  
         }  
           
-        // 获取价格数据  
-        async function fetchPrice() {  
-            if(!isConnected) {  
-                document.getElementById('ws-status').className = 'status-dot status-on';  
-                document.getElementById('connection-text').textContent = '已连接';  
-                isConnected = true;  
-            }  
+        // 连接 WebSocket  
+        function connectWebSocket() {  
+            if(ws) ws.close();  
               
             try {  
-                const url = corsProxy + encodeURIComponent(  
-                    `${binanceBase}/api/v3/ticker/24hr?symbol=${currentSymbol}`  
-                );  
-                const response = await fetch(url);  
-                const data = await response.json();  
+                ws = new WebSocket('wss://stream.binance.com:9443/ws/' + currentSymbol.toLowerCase() + '@ticker');  
                   
-                const price = parseFloat(data.lastPrice).toFixed(2);  
-                const change = parseFloat(data.priceChangePercent).toFixed(2);  
-                const high = parseFloat(data.highPrice).toFixed(2);  
-                const low = parseFloat(data.lowPrice).toFixed(2);  
-                const volume = parseFloat(data.volume).toFixed(2);  
+                ws.onopen = () => {  
+                    isConnected = true;  
+                    document.getElementById('ws-status').className = 'status-dot status-on';  
+                    document.getElementById('connection-text').textContent = '实时连接';  
+                    document.getElementById('connection-status').textContent = '✅ 实时数据';  
+                    addLog('WebSocket 已连接', 'normal');  
+                };  
                   
-                document.getElementById('current-price').textContent = '$' + price;  
-                const changeElem = document.getElementById('price-change');  
-                changeElem.textContent = change + '%';  
-                changeElem.className = change >= 0 ? 'info-up' : 'info-down';  
-                document.getElementById('price-high').textContent = '$' + high;  
-                document.getElementById('price-low').textContent = '$' + low;  
-                document.getElementById('price-volume').textContent = volume;  
+                ws.onmessage = (event) => {  
+                    const data = JSON.parse(event.data);  
+                    updatePrice(data);  
+                };  
                   
-                priceHistory.push(parseFloat(price));  
-                if(priceHistory.length > 100) priceHistory.shift();  
+                ws.onclose = () => {  
+                    isConnected = false;  
+                    document.getElementById('ws-status').className = 'status-dot status-off';  
+                    document.getElementById('connection-text').textContent = '已断开';  
+                    setTimeout(connectWebSocket, 5000);  
+                };  
                   
-                // 计算指标  
-                const rsi = calculateRSI(priceHistory);  
-                document.getElementById('rsi-value').textContent = rsi.toFixed(2);  
-                  
-                const volumeRatio = (parseFloat(data.volume) / 1000000).toFixed(2);  
-                document.getElementById('volume-ratio').textContent = volumeRatio + 'x';  
-                  
-                const ma5 = calculateMA(priceHistory, 5);  
-                const ma20 = calculateMA(priceHistory, 20);  
-                document.getElementById('ma5').textContent = '$' + ma5.toFixed(2);  
-                document.getElementById('ma20').textContent = '$' + ma20.toFixed(2);  
-                  
-                // 生成趋势预警  
-                generateTrends(price, rsi, ma5, ma20, volumeRatio);  
+                ws.onerror = () => {  
+                    document.getElementById('connection-status').textContent = '❌ 请开启代理';  
+                };  
                   
             } catch(error) {  
-                console.error('获取价格失败:', error);  
-                document.getElementById('ws-status').className = 'status-dot status-off';  
-                document.getElementById('connection-text').textContent = '连接失败';  
+                console.error('WebSocket 错误:', error);  
             }  
         }  
           
-        // 计算 RSI  
+        // 更新价格  
+        function updatePrice(data) {  
+            const price = parseFloat(data.c).toFixed(2);  
+            const change = parseFloat(data.P).toFixed(2);  
+            const high = parseFloat(data.h).toFixed(2);  
+            const low = parseFloat(data.l).toFixed(2);  
+            const volume = parseFloat(data.v).toFixed(2);  
+              
+            document.getElementById('current-price').textContent = '$' + price;  
+            const changeElem = document.getElementById('price-change');  
+            changeElem.textContent = change + '%';  
+            changeElem.className = change >= 0 ? 'info-up' : 'info-down';  
+            document.getElementById('price-high').textContent = '$' + high;  
+            document.getElementById('price-low').textContent = '$' + low;  
+            document.getElementById('price-volume').textContent = volume;  
+              
+            priceHistory.push(parseFloat(price));  
+            if(priceHistory.length > 100) priceHistory.shift();  
+              
+            const rsi = calculateRSI(priceHistory);  
+            document.getElementById('rsi-value').textContent = rsi.toFixed(2);  
+              
+            const volumeRatio = (parseFloat(data.v) / 1000000).toFixed(2);  
+            document.getElementById('volume-ratio').textContent = volumeRatio + 'x';  
+              
+            const ma5 = calculateMA(priceHistory, 5);  
+            const ma20 = calculateMA(priceHistory, 20);  
+            document.getElementById('ma5').textContent = '$' + ma5.toFixed(2);  
+            document.getElementById('ma20').textContent = '$' + ma20.toFixed(2);  
+              
+            generateTrends(price, rsi, ma5, ma20, volumeRatio);  
+        }  
+          
         function calculateRSI(prices) {  
             if(prices.length < 15) return 50;  
             let gains = 0, losses = 0;  
@@ -436,69 +477,50 @@
             return 100 - (100 / (1 + avgGain / avgLoss));  
         }  
           
-        // 计算 MA  
         function calculateMA(prices, period) {  
             if(prices.length < period) return prices[prices.length-1] || 0;  
             const slice = prices.slice(-period);  
             return slice.reduce((a,b) => a+b, 0) / period;  
         }  
           
-        // 生成趋势预警  
         function generateTrends(price, rsi, ma5, ma20, volumeRatio) {  
-            // 做多信号  
             const longDesc = document.getElementById('trend-long-desc');  
             if(rsi < 30 && price > ma5) {  
                 const confidence = 75 + Math.floor(Math.random() * 20);  
-                longDesc.innerHTML = `预计 30 分钟后多头拉升 信心：${confidence}% <span class="trend-detail-btn" onclick="showDetail('做多信号','RSI 超卖+站上 MA5+成交量放大，多头动能充足，建议关注')">详情分析</span>`;  
-            } else {  
-                longDesc.textContent = '暂无明确信号';  
-            }  
+                longDesc.innerHTML = `预计 30 分钟后多头拉升 信心：${confidence}% <span class="trend-detail-btn" onclick="showDetail('做多信号','RSI 超卖 + 站上 MA5+ 成交量放大，多头动能充足，建议关注')">详情分析</span>`;  
+            } else { longDesc.textContent = '暂无明确信号'; }  
               
-            // 做空信号  
             const shortDesc = document.getElementById('trend-short-desc');  
             if(rsi > 70 && price < ma5) {  
                 const confidence = 75 + Math.floor(Math.random() * 20);  
-                shortDesc.innerHTML = `预计 30 分钟后空头打压 信心：${confidence}% <span class="trend-detail-btn" onclick="showDetail('做空信号','RSI 超买+跌破 MA5+高位放量，空头动能充足，建议谨慎')">详情分析</span>`;  
-            } else {  
-                shortDesc.textContent = '暂无明确信号';  
-            }  
+                shortDesc.innerHTML = `预计 30 分钟后空头打压 信心：${confidence}% <span class="trend-detail-btn" onclick="showDetail('做空信号','RSI 超买 + 跌破 MA5+ 高位放量，空头动能充足，建议谨慎')">详情分析</span>`;  
+            } else { shortDesc.textContent = '暂无明确信号'; }  
               
-            // 砸盘预警  
             const dumpDesc = document.getElementById('trend-dump-desc');  
             if(price < ma20 * 0.98 && volumeRatio > 2) {  
                 const confidence = 80 + Math.floor(Math.random() * 15);  
-                dumpDesc.innerHTML = `预计 60 分钟后砸盘风险 信心：${confidence}% <span class="trend-detail-btn" onclick="showDetail('砸盘预警','跌破 MA20+放量下跌+恐慌情绪，主力可能在出货，注意风险')">详情分析</span>`;  
-            } else {  
-                dumpDesc.textContent = '暂无明确信号';  
-            }  
+                dumpDesc.innerHTML = `预计 60 分钟后砸盘风险 信心：${confidence}% <span class="trend-detail-btn" onclick="showDetail('砸盘预警','跌破 MA20+ 放量下跌 + 恐慌情绪，主力可能在出货，注意风险')">详情分析</span>`;  
+            } else { dumpDesc.textContent = '暂无明确信号'; }  
               
-            // V 转信号  
             const vDesc = document.getElementById('trend-v-desc');  
             if(price < ma20 * 0.95 && rsi < 25) {  
                 const confidence = 70 + Math.floor(Math.random() * 20);  
-                vDesc.innerHTML = `预计 90 分钟后 V 转反弹 信心：${confidence}% <span class="trend-detail-btn" onclick="showDetail('V 转信号','超跌+RSI 极低+接近支撑位，可能出现报复性反弹，可关注')">详情分析</span>`;  
-            } else {  
-                vDesc.textContent = '暂无明确信号';  
-            }  
+                vDesc.innerHTML = `预计 90 分钟后 V 转反弹 信心：${confidence}% <span class="trend-detail-btn" onclick="showDetail('V 转信号','超跌+RSI 极低 + 接近支撑位，可能出现报复性反弹，可关注')">详情分析</span>`;  
+            } else { vDesc.textContent = '暂无明确信号'; }  
               
-            // 回调预警  
             const pullbackDesc = document.getElementById('trend-pullback-desc');  
             if(price > ma20 * 1.05 && rsi > 65) {  
                 const confidence = 75 + Math.floor(Math.random() * 20);  
-                pullback.innerHTML = `预计 45 分钟后回调风险 信心：${confidence}% <span class="trend-detail-btn" onclick="showDetail('回调预警','涨幅过大+RSI 偏高+获利盘积累，可能短期回调，注意止盈')">详情分析</span>`;  
-            } else {  
-                pullbackDesc.textContent = '暂无明确信号';  
-            }  
+                pullbackDesc.innerHTML = `预计 45 分钟后回调风险 信心：${confidence}% <span class="trend-detail-btn" onclick="showDetail('回调预警','涨幅过大+RSI 偏高 + 获利盘积累，可能短期回调，注意止盈')">详情分析</span>`;  
+            } else { pullbackDesc.textContent = '暂无明确信号'; }  
         }  
           
-        // 显示详情  
         function showDetail(title, content) {  
             document.getElementById('detail-title').textContent = title;  
             document.getElementById('detail-content').textContent = content;  
             document.getElementById('detail-popup').classList.add('show');  
         }  
           
-        // 关闭详情  
         function closeDetail() {  
             document.getElementById('detail-popup').classList.remove('show');  
         }  
@@ -508,18 +530,12 @@
             const startTime = document.getElementById('start-time').value;  
             const endTime = document.getElementById('end-time').value;  
               
-            if(!startTime || !endTime) {  
-                alert('请选择开始和结束时间！');  
-                return;  
-            }  
+            if(!startTime || !endTime) { alert('请选择开始和结束时间！'); return; }  
               
             const startMs = new Date(startTime).getTime();  
             const endMs = new Date(endTime).getTime();  
               
-            if(startMs >= endMs) {  
-                alert('开始时间必须早于结束时间！');  
-                return;  
-            }  
+            if(startMs >= endMs) { alert('开始时间必须早于结束时间！'); return; }  
               
             addLog(`开始下载 ${currentSymbol} ${currentInterval} 历史数据...`, 'normal');  
               
@@ -529,22 +545,17 @@
                 let currentTime = startMs;  
                   
                 while(currentTime < endMs) {  
-                    const url = corsProxy + encodeURIComponent(  
-                        `${binanceBase}/api/v3/klines?symbol=${currentSymbol}&interval=${currentInterval}&startTime=${currentTime}&endTime=${endMs}&limit=1000`  
-                    );  
+                    const url = `${binanceBase}/api/v3/klines?symbol=${currentSymbol}&interval=${currentInterval}&startTime=${currentTime}&endTime=${endMs}&limit=1000`;  
                     const response = await fetch(url);  
                     const data = await response.json();  
                       
                     if(data.length === 0) break;  
-                      
                     klines.push(...data);  
                     currentTime = data[data.length-1][0] + intervalMs;  
-                      
                     if(data.length < 1000) break;  
                 }  
                   
-                // 生成 CSV  
-                let csv = '时间,开盘价,最高价,最低价,收盘价,成交量\n';  
+                let csv = '时间，开盘价，最高价，最低价，收盘价，成交量\n';  
                 klines.forEach(k => {  
                     const time = new Date(k[0]).toLocaleString('zh-CN', {  
                         year:'numeric',month:'2-digit',day:'2-digit',  
@@ -553,7 +564,6 @@
                     csv += `${time},${k[1]},${k[2]},${k[3]},${k[4]},${k[5]}\n`;  
                 });  
                   
-                // 下载文件  
                 const blob = new Blob([csv], { type: 'text/csv' });  
                 const url = URL.createObjectURL(blob);  
                 const a = document.createElement('a');  
@@ -569,29 +579,21 @@
             }  
         }  
           
-        // 获取时间间隔毫秒  
         function getIntervalMs(interval) {  
             const map = {  
-                '1M': 30*24*60*60*1000,  
-                '1W': 7*24*60*60*1000,  
-                '1d': 24*60*60*1000,  
-                '4h': 4*60*60*1000,  
-                '1h': 60*60*1000,  
-                '30m': 30*60*1000,  
-                '15m': 15*60*1000,  
-                '5m': 5*60*1000  
+                '1M': 30*24*60*60*1000, '1W': 7*24*60*60*1000, '1d': 24*60*60*1000,  
+                '4h': 4*60*60*1000, '1h': 60*60*1000, '30m': 30*60*1000,  
+                '15m': 15*60*1000, '5m': 5*60*1000  
             };  
             return map[interval] || 60*60*1000;  
         }  
           
-        // 通知权限  
         function requestNotificationPermission() {  
             Notification.requestPermission().then(p => {  
                 if(p === 'granted') new Notification('通知已开启', { body: '当有交易信号时会提醒您' });  
             });  
         }  
           
-        // 日志  
         function addLog(msg, type) {  
             const c = document.getElementById('log-container');  
             const t = new Date().toLocaleTimeString('zh-CN', { hour12: false });  
@@ -603,7 +605,7 @@
           
         // 初始化  
         loadSymbols();  
-        setInterval(fetchPrice, 3000);  
+        connectWebSocket();  
         addLog('系统启动', 'normal');  
     </script>  
 </body>  
