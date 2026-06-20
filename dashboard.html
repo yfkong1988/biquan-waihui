@@ -115,9 +115,9 @@ cursor: pointer;
 <div id="login-overlay">  
 <div class="login-box">  
 <h2>🔐 盯盘助手 - 登录</h2>  
-<input type="password" id="login-password" placeholder="请输入访问密码" onkeypress="if(event.keyCode===13) checkPassword()">  
+<input type="password" id="login-password" placeholder="请输入将军令" onkeypress="if(event.keyCode===13) checkPassword()">  
 <button onclick="checkPassword()">进入系统</button>  
-<div class="login-error" id="login-error">密码错误，请重试</div>  
+<div class="login-error" id="login-error">将军令错误，请重试</div>  
 </div>  
 </div>  
   
@@ -149,7 +149,7 @@ cursor: pointer;
 <button onclick="toggleSymbolList()" class="btn" style="flex:1">选择币种 ▼</button>  
 <button onclick="refreshSymbol()" class="btn" style="background:#0ecb81">🔄 刷新</button>  
 </div>  
-<input type="text" id="symbol-search" placeholder="🔍 搜索币种（如 BNB）" oninput="searchSymbol()" style="width:100%;padding:10px;border:2px solid #f0b90b;border-radius:6px">  
+<input type="text" id="symbol-search" placeholder="🔍 搜索币种（输入后按回车选择）" oninput="searchSymbol()" onkeypress="if(event.keyCode===13) selectFirstMatch()" style="width:100%;padding:10px;border:2px solid #f0b90b;border-radius:6px">  
 <input type="hidden" id="selected-symbol" value="BTCUSDT">  
 <div id="symbol-list-popup" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid #f0b90b;border-radius:8px;max-height:500px;overflow-y:auto;z-index:2000;box-shadow:0 10px 40px rgba(0,0,0,0.3)">  
 <div style="padding:15px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff">  
@@ -162,6 +162,7 @@ cursor: pointer;
 <span onclick="quickSelect('BNBUSDT')" style="padding:5px 12px;background:#f0b90b22;color:#f0b90b;border-radius:20px;cursor:pointer;font-size:12px">⭐ BNB</span>  
 <span onclick="quickSelect('XRPUSDT')" style="padding:5px 12px;background:#f0b90b22;color:#f0b90b;border-radius:20px;cursor:pointer;font-size:12px">⭐ XRP</span>  
 <span onclick="quickSelect('SOLUSDT')" style="padding:5px 12px;background:#f0b90b22;color:#f0b90b;border-radius:20px;cursor:pointer;font-size:12px">⭐ SOL</span>  
+<span onclick="quickSelect('LTCUSDT')" style="padding:5px 12px;background:#f0b90b22;color:#f0b90b;border-radius:20px;cursor:pointer;font-size:12px">⭐ LTC</span>  
 </div>  
 <div id="symbol-list-content"></div>  
 </div>  
@@ -249,7 +250,7 @@ cursor: pointer;
   
 <script>  
 // ========== 密码验证 ==========  
-const ACCESS_PASSWORD = '888888'; // 修改这里设置密码  
+const ACCESS_PASSWORD = 'a19880819'; // 将军令  
   
 function checkPassword() {  
 const input = document.getElementById('login-password').value;  
@@ -289,6 +290,7 @@ let priceHistory = [], ws = null, isConnected = false;
 let allSymbols = [];  
 let currentDateType = 'day';  
 let lastUpdateTime = null;  
+let searchResults = []; // 保存搜索结果  
 const binanceBase = 'https://api.binance.com';  
 const mainCoins = ['BTC','ETH','BNB','XRP','SOL','ADA','DOGE','AVAX','DOT','MATIC','LINK','UNI','LTC','ATOM','ETC'];  
 const newCoins = ['REZ','ASM','STX','GLM','ADB','UVXY','BMNR','EWZ','XLE','GME','RIVN','DKNG'];  
@@ -326,6 +328,7 @@ let filtered = allSymbols;
 if(type === 'main') filtered = allSymbols.filter(s => mainCoins.includes(s.base));  
 else if(type === 'new') filtered = allSymbols.filter(s => newCoins.includes(s.base));  
 else if(categoryMap[type]) filtered = allSymbols.filter(s => categoryMap[type].includes(s.base));  
+searchResults = filtered;  
 renderSymbolList(filtered.slice(0, 100));  
 }  
   
@@ -342,8 +345,15 @@ const input = document.getElementById('symbol-search').value.toUpperCase();
 const popup = document.getElementById('symbol-list-popup');  
 if(input.length >= 1 && popup.style.display !== 'block') popup.style.display = 'block';  
 if(input.length < 1) { filterSymbols(); return; }  
-const filtered = allSymbols.filter(s => s.base.includes(input)).slice(0, 50);  
-renderSymbolList(filtered);  
+searchResults = allSymbols.filter(s => s.base.includes(input)).slice(0, 50);  
+renderSymbolList(searchResults);  
+}  
+  
+// 按回车选择第一个匹配的  
+function selectFirstMatch() {  
+if(searchResults.length > 0) {  
+selectSymbol(searchResults[0].symbol);  
+}  
 }  
   
 function selectSymbol(symbol) {  
@@ -519,26 +529,11 @@ data.push([currentSymbol, time, k[1], k[2], k[3], k[4], k[5]]);
   
 const wb = XLSX.utils.book_new();  
 const ws = XLSX.utils.aoa_to_sheet(data);  
-  
-// 设置列宽  
-ws['!cols'] = [  
-{ wch: 15 }, // 币种  
-{ wch: 20 }, // 时间  
-{ wch: 12 }, // 开盘  
-{ wch: 12 }, // 最高  
-{ wch: 12 }, // 最低  
-{ wch: 12 }, // 收盘  
-{ wch: 15 } // 成交量  
-];  
-  
+ws['!cols'] = [{ wch: 15 }, { wch: 20 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 15 }];  
 XLSX.utils.book_append_sheet(wb, ws, '历史数据');  
 XLSX.writeFile(wb, `${currentSymbol}_${interval}_${startTime.replace(/[: ]/g,'')}_${endTime.replace(/[: ]/g,'')}.xlsx`);  
-  
 addLog(`下载完成：${klines.length} 条数据`, 'normal');  
-} catch(error) {  
-console.error('下载失败:', error);  
-addLog('下载失败：' + error.message, 'warning');  
-}  
+} catch(error) { console.error('下载失败:', error); addLog('下载失败：' + error.message, 'warning'); }  
 }  
   
 function getIntervalMs(interval) { const map = {'1M': 30*24*60*60*1000, '1W': 7*24*60*60*1000, '1d': 24*60*60*1000, '4h': 4*60*60*1000, '1h': 60*60*1000, '30m': 30*60*1000, '15m': 15*60*1000, '5m': 5*60*1000}; return map[interval] || 60*60*1000; }  
