@@ -231,6 +231,25 @@
         .daterangepicker td.active {  
             background: #f0b90b !important;  
         }  
+        .price-flash {  
+            animation: flash 0.5s ease-in-out;  
+        }  
+        @keyframes flash {  
+            0% { background: transparent; }  
+            50% { background: #0ecb8133; }  
+            100% { background: transparent; }  
+        }  
+        .loading-hint {  
+            color: #999;  
+            font-style: italic;  
+            font-size: 12px;  
+        }  
+        .update-time {  
+            font-size: 12px;  
+            color: #999;  
+            margin-top: 10px;  
+            text-align: right;  
+        }  
         @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }  
     </style>  
 </head>  
@@ -271,6 +290,7 @@
                         <option value="gaming">GameFi</option>  
                     </select>  
                     <button onclick="toggleSymbolList()" class="btn" style="flex:1">选择币种 ▼</button>  
+                    <button onclick="refreshSymbol()" class="btn" style="background:#0ecb81">🔄 刷新</button>  
                 </div>  
                 <input type="text" id="symbol-search" placeholder="🔍 搜索币种（如 BTC）" oninput="searchSymbol()" style="width:100%;padding:10px;border:2px solid #f0b90b;border-radius:6px">  
                 <input type="hidden" id="selected-symbol" value="BTCUSDT">  
@@ -359,21 +379,22 @@
             <!-- 实时行情 -->  
             <div class="card">  
                 <h3>📊 实时行情</h3>  
-                <div class="info-item"><span>当前价格</span><span id="current-price">--</span></div>  
-                <div class="info-item"><span>24h 涨跌</span><span id="price-change">--</span></div>  
-                <div class="info-item"><span>24h 最高</span><span id="price-high">--</span></div>  
-                <div class="info-item"><span>24h 最低</span><span id="price-low">--</span></div>  
-                <div class="info-item"><span>24h 成交量</span><span id="price-volume">--</span></div>  
+                <div class="info-item"><span>当前价格</span><span id="current-price"><span class="loading-hint">等待数据...</span></span></div>  
+                <div class="info-item"><span>24h 涨跌</span><span id="price-change"><span class="loading-hint">等待数据...</span></span></div>  
+                <div class="info-item"><span>24h 最高</span><span id="price-high"><span class="loading-hint">等待数据...</span></span></div>  
+                <div class="info-item"><span>24h 最低</span><span id="price-low"><span class="loading-hint">等待数据...</span></span></div>  
+                <div class="info-item"><span>24h 成交量</span><span id="price-volume"><span class="loading-hint">等待数据...</span></span></div>  
                 <div class="info-item"><span>状态</span><span><span class="status-dot status-off" id="ws-status"></span><span id="connection-text">未连接</span></span></div>  
+                <div class="update-time">最后更新：<span id="update-time">--:--:--</span></div>  
             </div>  
               
             <!-- 指标数据 -->  
             <div class="card">  
                 <h3>📈 技术指标</h3>  
-                <div class="info-item"><span>RSI(14)</span><span id="rsi-value">--</span></div>  
-                <div class="info-item"><span>成交量比</span><span id="volume-ratio">--</span></div>  
-                <div class="info-item"><span>MA5</span><span id="ma5">--</span></div>  
-                <div class="info-item"><span>MA20</span><span id="ma20">--</span></div>  
+                <div class="info-item"><span>RSI(14)</span><span id="rsi-value"><span class="loading-hint">计算中...</span></span></div>  
+                <div class="info-item"><span>成交量比</span><span id="volume-ratio"><span class="loading-hint">计算中...</span></span></div>  
+                <div class="info-item"><span>MA5</span><span id="ma5"><span class="loading-hint">计算中...</span></span></div>  
+                <div class="info-item"><span>MA20</span><span id="ma20"><span class="loading-hint">计算中...</span></span></div>  
             </div>  
         </div>  
           
@@ -383,23 +404,23 @@
             <div id="trend-container">  
                 <div class="trend-item trend-long">  
                     <div class="trend-title">📈 做多信号</div>  
-                    <div class="trend-desc" id="trend-long-desc">等待信号...</div>  
+                    <div class="trend-desc" id="trend-long-desc"><span class="loading-hint">等待数据...</span></div>  
                 </div>  
                 <div class="trend-item trend-short">  
                     <div class="trend-title">📉 做空信号</div>  
-                    <div class="trend-desc" id="trend-short-desc">等待信号...</div>  
+                    <div class="trend-desc" id="trend-short-desc"><span class="loading-hint">等待数据...</span></div>  
                 </div>  
                 <div class="trend-item trend-dump">  
                     <div class="trend-title">💥 砸盘预警</div>  
-                    <div class="trend-desc" id="trend-dump-desc">等待信号...</div>  
+                    <div class="trend-desc" id="trend-dump-desc"><span class="loading-hint">等待数据...</span></div>  
                 </div>  
                 <div class="trend-item trend-v">  
                     <div class="trend-title">🔄 V 转信号</div>  
-                    <div class="trend-desc" id="trend-v-desc">等待信号...</div>  
+                    <div class="trend-desc" id="trend-v-desc"><span class="loading-hint">等待数据...</span></div>  
                 </div>  
                 <div class="trend-item trend-pullback">  
                     <div class="trend-title">📊 回调预警</div>  
-                    <div class="trend-desc" id="trend-pullback-desc">等待信号...</div>  
+                    <div class="trend-desc" id="trend-pullback-desc"><span class="loading-hint">等待数据...</span></div>  
                 </div>  
             </div>  
         </div>  
@@ -432,6 +453,7 @@
         let priceHistory = [], ws = null, isConnected = false;  
         let allSymbols = [];  
         let currentDateType = 'day';  
+        let lastUpdateTime = null;  
         const binanceBase = 'https://api.binance.com';  
           
         const mainCoins = ['BTC','ETH','BNB','XRP','SOL','ADA','DOGE','AVAX','DOT','MATIC','LINK','UNI','LTC','ATOM','ETC'];  
@@ -536,45 +558,86 @@
             document.getElementById('symbol-search').value = symbol.replace('USDT','');  
             document.getElementById('symbol-list-popup').style.display = 'none';  
             priceHistory = [];  
+              
+            // 清空当前显示  
+            document.getElementById('current-price').innerHTML = '<span class="loading-hint">等待数据...</span>';  
+            document.getElementById('price-change').innerHTML = '<span class="loading-hint">等待数据...</span>';  
+            document.getElementById('rsi-value').innerHTML = '<span class="loading-hint">计算中...</span>';  
+            document.getElementById('volume-ratio').innerHTML = '<span class="loading-hint">计算中...</span>';  
+            document.getElementById('ma5').innerHTML = '<span class="loading-hint">计算中...</span>';  
+            document.getElementById('ma20').innerHTML = '<span class="loading-hint">计算中...</span>';  
+              
+            // 重新连接  
             connectWebSocket();  
             addLog(`切换币种：${symbol}`, 'normal');  
+        }  
+          
+        // 刷新币种  
+        function refreshSymbol() {  
+            const symbol = document.getElementById('selected-symbol').value;  
+            selectSymbol(symbol);  
+            addLog(`刷新：${symbol}`, 'normal');  
         }  
           
         // 切换周期  
         function changeInterval() {  
             currentInterval = document.getElementById('interval-select').value;  
             priceHistory = [];  
-            connectWebSocket();  
             addLog(`切换周期：${currentInterval}`, 'normal');  
         }  
           
         // 连接 WebSocket  
         function connectWebSocket() {  
-            if(ws) ws.close();  
+            // 避免重复连接  
+            if(ws && ws.readyState === WebSocket.OPEN) {  
+                return;  
+            }  
+              
+            // 关闭旧连接  
+            if(ws) {  
+                ws.close();  
+                ws = null;  
+            }  
+              
             try {  
                 ws = new WebSocket('wss://stream.binance.com:9443/ws/' + currentSymbol.toLowerCase() + '@ticker');  
+                  
                 ws.onopen = () => {  
                     isConnected = true;  
                     document.getElementById('ws-status').className = 'status-dot status-on';  
                     document.getElementById('connection-text').textContent = '实时连接';  
                     document.getElementById('connection-status').textContent = '✅ 实时数据';  
-                    addLog('WebSocket 已连接', 'normal');  
+                    addLog(`已连接：${currentSymbol}`, 'normal');  
                 };  
+                  
                 ws.onmessage = (event) => {  
                     const data = JSON.parse(event.data);  
                     updatePrice(data);  
                 };  
+                  
                 ws.onclose = () => {  
-                    isConnected = false;  
-                    document.getElementById('ws-status').className = 'status-dot status-off';  
-                    document.getElementById('connection-text').textContent = '已断开';  
+                    // 避免闪烁：延迟更新状态  
+                    setTimeout(() => {  
+                        if(!isConnected || (ws && ws.readyState !== WebSocket.OPEN)) {  
+                            isConnected = false;  
+                            document.getElementById('ws-status').className = 'status-dot status-off';  
+                            document.getElementById('connection-text').textContent = '已断开';  
+                        }  
+                    }, 2000);  
+                      
+                    // 自动重连  
                     setTimeout(connectWebSocket, 5000);  
                 };  
+                  
                 ws.onerror = () => {  
                     document.getElementById('connection-status').textContent = '❌ 请开启代理';  
                 };  
+                  
             } catch(error) {  
                 console.error('WebSocket 错误:', error);  
+                isConnected = false;  
+                document.getElementById('ws-status').className = 'status-dot status-off';  
+                document.getElementById('connection-text').textContent = '连接失败';  
             }  
         }  
           
@@ -586,13 +649,25 @@
             const low = parseFloat(data.l).toFixed(2);  
             const volume = parseFloat(data.v).toFixed(2);  
               
-            document.getElementById('current-price').textContent = '$' + price;  
+            // 价格闪烁效果  
+            const priceElem = document.getElementById('current-price');  
+            priceElem.textContent = '$' + price;  
+            priceElem.classList.remove('price-flash');  
+            void priceElem.offsetWidth; // 触发重绘  
+            priceElem.classList.add('price-flash');  
+              
             const changeElem = document.getElementById('price-change');  
             changeElem.textContent = change + '%';  
             changeElem.className = change >= 0 ? 'info-up' : 'info-down';  
+            changeElem.classList.add('price-flash');  
+              
             document.getElementById('price-high').textContent = '$' + high;  
             document.getElementById('price-low').textContent = '$' + low;  
             document.getElementById('price-volume').textContent = volume;  
+              
+            // 更新时间  
+            lastUpdateTime = new Date();  
+            document.getElementById('update-time').textContent = lastUpdateTime.toLocaleTimeString('zh-CN', { hour12: false });  
               
             priceHistory.push(parseFloat(price));  
             if(priceHistory.length > 100) priceHistory.shift();  
