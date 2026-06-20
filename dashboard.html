@@ -4,6 +4,10 @@
     <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0">  
     <title>盯盘助手 - 专业版</title>  
+      
+    <!-- 日期范围选择器 -->  
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css ">  
+      
     <style>  
         * { margin: 0; padding: 0; box-sizing: border-box; }  
         body {  
@@ -37,6 +41,7 @@
         }  
         .btn-logout { background: #f6465d; }  
         .btn-download { background: #0ecb81; }  
+        .btn.active { background: #f5a623; }  
         .controls-grid {  
             display: grid;  
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));  
@@ -175,6 +180,57 @@
             text-align: center;  
         }  
         .proxy-notice a { color: #f0b90b; font-weight: bold; }  
+        .date-input-group {  
+            display: flex;  
+            gap: 15px;  
+            align-items: center;  
+        }  
+        .date-input-group input {  
+            flex: 1;  
+            padding: 12px;  
+            border: 2px solid #f0b90b;  
+            border-radius: 6px;  
+            font-size: 14px;  
+            cursor: pointer;  
+        }  
+        .date-quick-select {  
+            display: flex;  
+            gap: 10px;  
+            margin-top: 10px;  
+            flex-wrap: wrap;  
+        }  
+        .date-quick-select label {  
+            display: flex;  
+            align-items: center;  
+            gap: 5px;  
+            cursor: pointer;  
+            font-size: 13px;  
+            color: #666;  
+        }  
+        .date-quick-select input[type="radio"] {  
+            accent-color: #f0b90b;  
+        }  
+        .daterangepicker {  
+            border: 2px solid #f0b90b !important;  
+            border-radius: 8px !important;  
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;  
+        }  
+        .daterangepicker .ranges li {  
+            color: #f0b90b !important;  
+        }  
+        .daterangepicker .ranges li.active {  
+            background: #f0b90b !important;  
+        }  
+        .daterangepicker td.available:hover,  
+        .daterangepicker th.available:hover {  
+            background: #f0b90b22 !important;  
+        }  
+        .daterangepicker td.in-range {  
+            background: #f0b90b44 !important;  
+        }  
+        .daterangepicker td.active {  
+            background: #f0b90b !important;  
+        }  
         @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }  
     </style>  
 </head>  
@@ -201,14 +257,49 @@
           
         <!-- 控制选项 -->  
         <div class="controls-grid">  
-            <div class="control-card">  
+            <!-- 币种选择器 -->  
+            <div class="control-card" style="position:relative">  
                 <label>🪙 选择币种</label>  
-                <div class="search-box">  
-                    <input type="text" id="symbol-search" placeholder="搜索币种（如 BTC）" oninput="searchSymbol()">  
-                    <div class="search-results" id="search-results"></div>  
-                    <input type="hidden" id="selected-symbol" value="BTCUSDT">  
+                <div style="display:flex;gap:10px;margin-bottom:10px">  
+                    <select id="market-type" onchange="filterSymbols()" style="flex:1;padding:8px;border:2px solid #f0b90b;border-radius:6px">  
+                        <option value="all">全部</option>  
+                        <option value="new">新币</option>  
+                        <option value="main">主流币</option>  
+                        <option value="defi">DeFi</option>  
+                        <option value="meme">Meme</option>  
+                        <option value="ai">AI</option>  
+                        <option value="gaming">GameFi</option>  
+                    </select>  
+                    <button onclick="toggleSymbolList()" class="btn" style="flex:1">选择币种 ▼</button>  
+                </div>  
+                <input type="text" id="symbol-search" placeholder="🔍 搜索币种（如 BTC）" oninput="searchSymbol()" style="width:100%;padding:10px;border:2px solid #f0b90b;border-radius:6px">  
+                <input type="hidden" id="selected-symbol" value="BTCUSDT">  
+                  
+                <!-- 币种列表弹窗 -->  
+                <div id="symbol-list-popup" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid #f0b90b;border-radius:8px;max-height:500px;overflow-y:auto;z-index:2000;box-shadow:0 10px 40px rgba(0,0,0,0.3)">  
+                    <div style="padding:15px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff">  
+                        <strong>选择交易对</strong>  
+                        <span onclick="toggleSymbolList()" style="cursor:pointer;font-size:20px;color:#999">×</span>  
+                    </div>  
+                      
+                    <!-- 热门标签 -->  
+                    <div style="padding:10px;border-bottom:1px solid #eee;display:flex;flex-wrap:wrap;gap:8px">  
+                        <span onclick="quickSelect('BTCUSDT')" style="padding:5px 12px;background:#f0b90b22;color:#f0b90b;border-radius:20px;cursor:pointer;font-size:12px">⭐ BTC</span>  
+                        <span onclick="quickSelect('ETHUSDT')" style="padding:5px 12px;background:#f0b90b22;color:#f0b90b;border-radius:20px;cursor:pointer;font-size:12px">⭐ ETH</span>  
+                        <span onclick="quickSelect('BNBUSDT')" style="padding:5px 12px;background:#f0b90b22;color:#f0b90b;border-radius:20px;cursor:pointer;font-size:12px">⭐ BNB</span>  
+                        <span onclick="quickSelect('XRPUSDT')" style="padding:5px 12px;background:#f0b90b22;color:#f0b90b;border-radius:20px;cursor:pointer;font-size:12px">⭐ XRP</span>  
+                        <span onclick="quickSelect('SOLUSDT')" style="padding:5px 12px;background:#f0b90b22;color:#f0b90b;border-radius:20px;cursor:pointer;font-size:12px">⭐ SOL</span>  
+                        <span onclick="quickSelect('ADAUSDT')" style="padding:5px 12px;background:#f0b90b22;color:#f0b90b;border-radius:20px;cursor:pointer;font-size:12px">⭐ ADA</span>  
+                        <span onclick="quickSelect('DOGEUSDT')" style="padding:5px 12px;background:#f0b90b22;color:#f0b90b;border-radius:20px;cursor:pointer;font-size:12px">⭐ DOGE</span>  
+                        <span onclick="quickSelect('AVAXUSDT')" style="padding:5px 12px;background:#f0b90b22;color:#f0b90b;border-radius:20px;cursor:pointer;font-size:12px">⭐ AVAX</span>  
+                    </div>  
+                      
+                    <!-- 币种列表 -->  
+                    <div id="symbol-list-content"></div>  
                 </div>  
             </div>  
+              
+            <!-- 时间周期 -->  
             <div class="control-card">  
                 <label>⏱️ 时间周期</label>  
                 <select id="interval-select" onchange="changeInterval()">  
@@ -222,6 +313,8 @@
                     <option value="5m">5 分钟</option>  
                 </select>  
             </div>  
+              
+            <!-- 下载按钮 -->  
             <div class="control-card">  
                 <label>📥 下载历史数据</label>  
                 <button onclick="downloadData()" class="btn btn-download" style="width:100%">下载 CSV</button>  
@@ -231,16 +324,35 @@
         <!-- 时间范围选择 -->  
         <div class="card" style="margin-bottom:20px">  
             <h3>📅 下载时间范围</h3>  
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">  
-                <div>  
-                    <label>开始时间</label>  
-                    <input type="datetime-local" id="start-time" style="width:100%;padding:10px;border:2px solid #f0b90b;border-radius:6px">  
-                </div>  
-                <div>  
-                    <label>结束时间</label>  
-                    <input type="datetime-local" id="end-time" style="width:100%;padding:10px;border:2px solid #f0b90b;border-radius:6px">  
-                </div>  
+              
+            <!-- 日期类型切换 -->  
+            <div style="display:flex;gap:10px;margin-bottom:15px">  
+                <button class="btn date-type-btn active" data-type="day" onclick="switchDateType('day')">📅 日</button>  
+                <button class="btn date-type-btn" data-type="week" onclick="switchDateType('week')">📆 周</button>  
+                <button class="btn date-type-btn" data-type="month" onclick="switchDateType('month')">📊 月</button>  
             </div>  
+              
+            <!-- 日期输入 -->  
+            <div class="date-input-group">  
+                <input type="text" id="date-range-picker" placeholder="选择日期范围" readonly>  
+            </div>  
+              
+            <!-- 快捷选项 -->  
+            <div class="date-quick-select">  
+                <label><input type="radio" name="quick-date" value="yesterday" onchange="selectQuickDate('yesterday')"> 昨日</label>  
+                <label><input type="radio" name="quick-date" value="week" onchange="selectQuickDate('week')"> 最近一周</label>  
+                <label><input type="radio" name="quick-date" value="month" onchange="selectQuickDate('month')"> 最近 30 天</label>  
+            </div>  
+              
+            <!-- 智能提示 -->  
+            <div style="margin-top:15px;padding:15px;background:#f0b90b11;border-radius:8px;border:2px solid #f0b90b">  
+                <strong>💡 智能提示：</strong>  
+                <span id="time-range-hint">选择 1H 周期，下载数据按小时粒度对齐</span>  
+            </div>  
+              
+            <!-- 隐藏的真实输入框 -->  
+            <input type="hidden" id="start-time">  
+            <input type="hidden" id="end-time">  
         </div>  
           
         <div class="main-grid">  
@@ -306,6 +418,12 @@
         <p id="detail-content" style="line-height:1.8"></p>  
     </div>  
       
+    <!-- 依赖库 -->  
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js "></script>  
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js "></script>  
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment-with-locales.min.js "></script>  
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js "></script>  
+      
     <script>  
         document.getElementById('display-name').textContent = username;  
         function logout() { localStorage.removeItem('cryptoUsername'); window.location.href = 'index.html'; }  
@@ -313,32 +431,33 @@
         let currentSymbol = 'BTCUSDT', currentInterval = '1h';  
         let priceHistory = [], ws = null, isConnected = false;  
         let allSymbols = [];  
+        let currentDateType = 'day';  
         const binanceBase = 'https://api.binance.com';  
+          
+        const mainCoins = ['BTC','ETH','BNB','XRP','SOL','ADA','DOGE','AVAX','DOT','MATIC','LINK','UNI','LTC','ATOM','ETC'];  
+        const newCoins = ['REZ','ASM','STX','GLM','ADB','UVXY','BMNR','EWZ','XLE','GME','RIVN','DKNG'];  
+        const categoryMap = {  
+            'defi': ['UNI','AAVE','MKR','SNX','CRV','COMP','SUSHI','YFI'],  
+            'meme': ['DOGE','SHIB','PEPE','FLOKI','BONK','WIF'],  
+            'ai': ['FET','AGIX','OCEAN','RNDR','INJ','ARKM'],  
+            'gaming': ['AXS','SAND','MANA','GALA','IMX','ENJ','ALICE']  
+        };  
           
         // 测试连接  
         async function testConnection() {  
             const status = document.getElementById('connection-status');  
             status.textContent = '测试中...';  
-              
             try {  
                 ws = new WebSocket('wss://stream.binance.com:9443/ws/' + currentSymbol.toLowerCase() + '@ticker');  
-                  
                 ws.onopen = () => {  
                     status.textContent = '✅ 可直连（已开代理）';  
                     status.style.color = '#0ecb81';  
-                    addLog('连接测试成功', 'normal');  
                 };  
-                  
                 ws.onerror = () => {  
                     status.textContent = '❌ 无法直连（请开代理）';  
                     status.style.color = '#f6465d';  
-                    addLog('连接测试失败', 'warning');  
                 };  
-                  
-                setTimeout(() => {  
-                    if(ws) ws.close();  
-                }, 3000);  
-                  
+                setTimeout(() => { if(ws) ws.close(); }, 3000);  
             } catch(error) {  
                 status.textContent = '❌ 无法直连（请开代理）';  
                 status.style.color = '#f6465d';  
@@ -350,29 +469,64 @@
             try {  
                 const response = await fetch(binanceBase + '/api/v3/exchangeInfo');  
                 const data = await response.json();  
-                allSymbols = data.symbols  
-                    .filter(s => s.quoteAsset === 'USDT' && s.status === 'TRADING')  
-                    .map(s => ({ symbol: s.symbol, base: s.baseAsset }));  
+                allSymbols = data.symbols.filter(s => s.quoteAsset === 'USDT' && s.status === 'TRADING').map(s => ({ symbol: s.symbol, base: s.baseAsset }));  
             } catch(error) {  
-                allSymbols = [  
-                    {symbol:'BTCUSDT',base:'BTC'},{symbol:'ETHUSDT',base:'ETH'},  
-                    {symbol:'BNBUSDT',base:'BNB'},{symbol:'XRPUSDT',base:'XRP'},  
-                    {symbol:'SOLUSDT',base:'SOL'},{symbol:'ADAUSDT',base:'ADA'}  
-                ];  
+                allSymbols = mainCoins.map(c => ({symbol:c+'USDT',base:c}));  
             }  
+        }  
+          
+        // 切换币种列表  
+        function toggleSymbolList() {  
+            const popup = document.getElementById('symbol-list-popup');  
+            popup.style.display = popup.style.display === 'none' ? 'block' : 'none';  
+            if(popup.style.display === 'block') filterSymbols();  
+        }  
+          
+        // 筛选币种  
+        function filterSymbols() {  
+            const type = document.getElementById('market-type').value;  
+            const content = document.getElementById('symbol-list-content');  
+            let filtered = allSymbols;  
+            if(type === 'main') filtered = allSymbols.filter(s => mainCoins.includes(s.base));  
+            else if(type === 'new') filtered = allSymbols.filter(s => newCoins.includes(s.base));  
+            else if(categoryMap[type]) filtered = allSymbols.filter(s => categoryMap[type].includes(s.base));  
+            renderSymbolList(filtered.slice(0, 100));  
+        }  
+          
+        // 渲染币种列表  
+        function renderSymbolList(symbols) {  
+            const content = document.getElementById('symbol-list-content');  
+            if(symbols.length === 0) {  
+                content.innerHTML = '<div style="padding:20px;text-align:center;color:#999">暂无数据</div>';  
+                return;  
+            }  
+            content.innerHTML = symbols.map(s => `  
+                <div onclick="selectSymbol('${s.symbol}')" style="padding:12px 15px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background='#f0b90b11'" onmouseout="this.style.background='white'">  
+                    <div style="display:flex;align-items:center;gap:10px">  
+                        <span style="font-weight:bold;color:#333">${s.base}</span>  
+                        <span style="color:#999;font-size:12px">/USDT</span>  
+                        ${mainCoins.includes(s.base) ? '<span style="background:#f0b90b22;color:#f0b90b;padding:2px 6px;border-radius:4px;font-size:10px">主流</span>' : ''}  
+                        ${newCoins.includes(s.base) ? '<span style="background:#0ecb8122;color:#0ecb81;padding:2px 6px;border-radius:4px;font-size:10px">新币</span>' : ''}  
+                    </div>  
+                    <span style="color:#999;font-size:12px">点击选择</span>  
+                </div>  
+            `).join('');  
+        }  
+          
+        // 快速选择  
+        function quickSelect(symbol) {  
+            selectSymbol(symbol);  
+            toggleSymbolList();  
         }  
           
         // 搜索币种  
         function searchSymbol() {  
             const input = document.getElementById('symbol-search').value.toUpperCase();  
-            const results = document.getElementById('search-results');  
-              
-            if(input.length < 1) { results.classList.remove('show'); return; }  
-              
-            const filtered = allSymbols.filter(s => s.base.includes(input)).slice(0, 20);  
-            results.innerHTML = filtered.length === 0 ? '<div class="search-item">未找到</div>' :  
-                filtered.map(s => `<div class="search-item" onclick="selectSymbol('${s.symbol}')">${s.base}/USDT</div>`).join('');  
-            results.classList.add('show');  
+            const popup = document.getElementById('symbol-list-popup');  
+            if(input.length >= 1 && popup.style.display !== 'block') popup.style.display = 'block';  
+            if(input.length < 1) { filterSymbols(); return; }  
+            const filtered = allSymbols.filter(s => s.base.includes(input)).slice(0, 50);  
+            renderSymbolList(filtered);  
         }  
           
         // 选择币种  
@@ -380,7 +534,7 @@
             currentSymbol = symbol;  
             document.getElementById('selected-symbol').value = symbol;  
             document.getElementById('symbol-search').value = symbol.replace('USDT','');  
-            document.getElementById('search-results').classList.remove('show');  
+            document.getElementById('symbol-list-popup').style.display = 'none';  
             priceHistory = [];  
             connectWebSocket();  
             addLog(`切换币种：${symbol}`, 'normal');  
@@ -397,10 +551,8 @@
         // 连接 WebSocket  
         function connectWebSocket() {  
             if(ws) ws.close();  
-              
             try {  
                 ws = new WebSocket('wss://stream.binance.com:9443/ws/' + currentSymbol.toLowerCase() + '@ticker');  
-                  
                 ws.onopen = () => {  
                     isConnected = true;  
                     document.getElementById('ws-status').className = 'status-dot status-on';  
@@ -408,23 +560,19 @@
                     document.getElementById('connection-status').textContent = '✅ 实时数据';  
                     addLog('WebSocket 已连接', 'normal');  
                 };  
-                  
                 ws.onmessage = (event) => {  
                     const data = JSON.parse(event.data);  
                     updatePrice(data);  
                 };  
-                  
                 ws.onclose = () => {  
                     isConnected = false;  
                     document.getElementById('ws-status').className = 'status-dot status-off';  
                     document.getElementById('connection-text').textContent = '已断开';  
                     setTimeout(connectWebSocket, 5000);  
                 };  
-                  
                 ws.onerror = () => {  
                     document.getElementById('connection-status').textContent = '❌ 请开启代理';  
                 };  
-                  
             } catch(error) {  
                 console.error('WebSocket 错误:', error);  
             }  
@@ -525,54 +673,149 @@
             document.getElementById('detail-popup').classList.remove('show');  
         }  
           
+        // 切换日期类型  
+        function switchDateType(type) {  
+            currentDateType = type;  
+            document.querySelectorAll('.date-type-btn').forEach(btn => {  
+                btn.classList.remove('active');  
+                if(btn.dataset.type === type) btn.classList.add('active');  
+            });  
+            const hints = {  
+                'day': '按日选择，精确到天',  
+                'week': '按周选择，自动对齐到周一',  
+                'month': '按月选择，自动对齐到月初'  
+            };  
+            document.getElementById('time-range-hint').textContent = hints[type];  
+        }  
+          
+        // 快捷选择  
+        function selectQuickDate(type) {  
+            const now = moment();  
+            let startDate, endDate = now;  
+            switch(type) {  
+                case 'yesterday':  
+                    startDate = now.clone().subtract(1, 'days');  
+                    endDate = now.clone().subtract(1, 'days').endOf('day');  
+                    break;  
+                case 'week':  
+                    startDate = now.clone().subtract(7, 'days');  
+                    break;  
+                case 'month':  
+                    startDate = now.clone().subtract(30, 'days');  
+                    break;  
+            }  
+            $('#date-range-picker').data('daterangepicker').setStartDate(startDate);  
+            $('#date-range-picker').data('daterangepicker').setEndDate(endDate);  
+            $('#date-range-picker').trigger('change');  
+        }  
+          
+        // 初始化日期范围选择器  
+        function initDateRangePicker() {  
+            $('#date-range-picker').daterangepicker({  
+                opens: 'center',  
+                locale: {  
+                    format: 'YYYY-MM-DD',  
+                    separator: ' ~ ',  
+                    applyLabel: '确定',  
+                    cancelLabel: '取消',  
+                    fromLabel: '从',  
+                    toLabel: '到',  
+                    customRangeLabel: '自定义',  
+                    weekLabel: '周',  
+                    daysOfWeek: ['日', '一', '二', '三', '四', '五', '六'],  
+                    monthNames: ['1 月', '2 月', '3 月', '4 月', '5 月', '6 月', '7 月', '8 月', '9 月', '10 月', '11 月', '12 月'],  
+                    firstDay: 1  
+                },  
+                ranges: {  
+                    '昨日': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],  
+                    '最近 7 天': [moment().subtract(6, 'days'), moment()],  
+                    '最近 30 天': [moment().subtract(29, 'days'), moment()],  
+                    '本月': [moment().startOf('month'), moment().endOf('month')],  
+                    '上月': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]  
+                },  
+                alwaysShowCalendars: true,  
+                showWeekNumbers: true,  
+                minDate: moment().subtract(3, 'years'),  
+                maxDate: moment(),  
+                startDate: moment().subtract(7, 'days'),  
+                endDate: moment()  
+            }, function(start, end) {  
+                handleDateSelection(start, end);  
+            });  
+            $('#date-range-picker').on('change', function() {  
+                const picker = $(this).data('daterangepicker');  
+                if(picker.startDate && picker.endDate) handleDateSelection(picker.startDate, picker.endDate);  
+            });  
+        }  
+          
+        // 处理日期选择  
+        function handleDateSelection(start, end) {  
+            let alignedStart, alignedEnd;  
+            switch(currentDateType) {  
+                case 'day':  
+                    alignedStart = start.startOf('day');  
+                    alignedEnd = end.endOf('day');  
+                    break;  
+                case 'week':  
+                    alignedStart = start.startOf('isoWeek');  
+                    alignedEnd = end.endOf('isoWeek');  
+                    break;  
+                case 'month':  
+                    alignedStart = start.startOf('month');  
+                    alignedEnd = end.endOf('month');  
+                    break;  
+            }  
+            document.getElementById('start-time').value = alignedStart.format('YYYY-MM-DD HH:mm');  
+            document.getElementById('end-time').value = alignedEnd.format('YYYY-MM-DD HH:mm');  
+            updateRangeHint(alignedStart, alignedEnd);  
+        }  
+          
+        // 更新提示  
+        function updateRangeHint(start, end) {  
+            const interval = document.getElementById('interval-select').value;  
+            const days = end.diff(start, 'days');  
+            let hint = `共${days}天 `;  
+            if(interval === '5m') hint += `，预计${Math.round(days * 24 * 12)}条数据`;  
+            else if(interval === '1h') hint += `，预计${Math.round(days * 24)}条数据`;  
+            else if(interval === '1d') hint += `，预计${days}条数据`;  
+            document.getElementById('time-range-hint').textContent = hint;  
+        }  
+          
         // 下载历史数据  
         async function downloadData() {  
             const startTime = document.getElementById('start-time').value;  
             const endTime = document.getElementById('end-time').value;  
-              
             if(!startTime || !endTime) { alert('请选择开始和结束时间！'); return; }  
-              
             const startMs = new Date(startTime).getTime();  
             const endMs = new Date(endTime).getTime();  
-              
             if(startMs >= endMs) { alert('开始时间必须早于结束时间！'); return; }  
-              
-            addLog(`开始下载 ${currentSymbol} ${currentInterval} 历史数据...`, 'normal');  
-              
+            const interval = document.getElementById('interval-select').value;  
+            addLog(`开始下载 ${currentSymbol} ${interval} 历史数据...`, 'normal');  
             try {  
-                const intervalMs = getIntervalMs(currentInterval);  
+                const intervalMs = getIntervalMs(interval);  
                 const klines = [];  
                 let currentTime = startMs;  
-                  
                 while(currentTime < endMs) {  
-                    const url = `${binanceBase}/api/v3/klines?symbol=${currentSymbol}&interval=${currentInterval}&startTime=${currentTime}&endTime=${endMs}&limit=1000`;  
+                    const url = `${binanceBase}/api/v3/klines?symbol=${currentSymbol}&interval=${interval}&startTime=${currentTime}&endTime=${endMs}&limit=1000`;  
                     const response = await fetch(url);  
                     const data = await response.json();  
-                      
                     if(data.length === 0) break;  
                     klines.push(...data);  
                     currentTime = data[data.length-1][0] + intervalMs;  
                     if(data.length < 1000) break;  
                 }  
-                  
                 let csv = '时间，开盘价，最高价，最低价，收盘价，成交量\n';  
                 klines.forEach(k => {  
-                    const time = new Date(k[0]).toLocaleString('zh-CN', {  
-                        year:'numeric',month:'2-digit',day:'2-digit',  
-                        hour:'2-digit',minute:'2-digit',second:'2-digit'  
-                    });  
+                    const time = formatTime(k[0], interval);  
                     csv += `${time},${k[1]},${k[2]},${k[3]},${k[4]},${k[5]}\n`;  
                 });  
-                  
                 const blob = new Blob([csv], { type: 'text/csv' });  
                 const url = URL.createObjectURL(blob);  
                 const a = document.createElement('a');  
                 a.href = url;  
-                a.download = `${currentSymbol}_${currentInterval}_${startTime}_${endTime}.csv`;  
+                a.download = `${currentSymbol}_${interval}_${startTime.replace(/[: ]/g,'')}_${endTime.replace(/[: ]/g,'')}.csv`;  
                 a.click();  
-                  
                 addLog(`下载完成：${klines.length} 条数据`, 'normal');  
-                  
             } catch(error) {  
                 console.error('下载失败:', error);  
                 addLog('下载失败：' + error.message, 'warning');  
@@ -586,6 +829,31 @@
                 '15m': 15*60*1000, '5m': 5*60*1000  
             };  
             return map[interval] || 60*60*1000;  
+        }  
+          
+        function formatTime(timestamp, interval) {  
+            const date = new Date(timestamp);  
+            const y = date.getFullYear();  
+            const m = String(date.getMonth() + 1).padStart(2, '0');  
+            const d = String(date.getDate()).padStart(2, '0');  
+            const h = String(date.getHours()).padStart(2, '0');  
+            const min = String(date.getMinutes()).padStart(2, '0');  
+            switch(interval) {  
+                case '5m': case '15m': case '30m': return `${y}-${m}-${d} ${h}:${min}`;  
+                case '1h': case '4h': return `${y}-${m}-${d} ${h}:00`;  
+                case '1d': return `${y}-${m}-${d}`;  
+                case '1W': return `${y}年 W${getWeekNumber(date)}周`;  
+                case '1M': return `${y}-${m}`;  
+                default: return `${y}-${m}-${d} ${h}:${min}`;  
+            }  
+        }  
+          
+        function getWeekNumber(date) {  
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));  
+            const dayNum = d.getUTCDay() || 7;  
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);  
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));  
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);  
         }  
           
         function requestNotificationPermission() {  
@@ -606,6 +874,7 @@
         // 初始化  
         loadSymbols();  
         connectWebSocket();  
+        initDateRangePicker();  
         addLog('系统启动', 'normal');  
     </script>  
 </body>  
