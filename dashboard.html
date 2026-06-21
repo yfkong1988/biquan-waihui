@@ -150,7 +150,7 @@ cursor: pointer;
 <button onclick="toggleSymbolList()" class="btn" style="flex:1">选择币种 ▼</button>  
 <button onclick="refreshSymbol()" class="btn" style="background:#0ecb81">🔄 刷新</button>  
 </div>  
-<input type="text" id="symbol-search" placeholder="🔍 搜索币种（输入后按回车或点击列表）" oninput="searchSymbol()" onblur="autoSelectFirst()" onkeypress="if(event.keyCode===13) selectFirstMatch()" style="width:100%;padding:10px;border:2px solid #f0b90b;border-radius:6px">  
+<input type="text" id="symbol-search" placeholder="🔍 搜索币种（输入后按回车或点击列表）" oninput="searchSymbol()" onkeypress="if(event.keyCode===13) selectFirstMatch()" style="width:100%;padding:10px;border:2px solid #f0b90b;border-radius:6px">  
 <div class="current-symbol-display">当前币种：<span id="current-symbol-display">BTC/USDT</span></div>  
 <input type="hidden" id="selected-symbol" value="BTCUSDT">  
 <div id="symbol-list-popup" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid #f0b90b;border-radius:8px;max-height:500px;overflow-y:auto;z-index:2000;box-shadow:0 10px 40px rgba(0,0,0,0.3)">  
@@ -305,10 +305,10 @@ async function testConnection() {
 const status = document.getElementById('connection-status');  
 status.textContent = '测试中...';  
 try {  
-ws = new WebSocket('wss://stream.binance.com:9443/ws/' + currentSymbol.toLowerCase() + '@ticker');  
-ws.onopen = () => { status.textContent = '✅ 可直连（已开代理）'; status.style.color = '#0ecb81'; };  
-ws.onerror = () => { status.textContent = '❌ 无法直连（请开代理）'; status.style.color = '#f6465d'; };  
-setTimeout(() => { if(ws) ws.close(); }, 3000);  
+const testWs = new WebSocket('wss://stream.binance.com:9443/ws/' + currentSymbol.toLowerCase() + '@ticker');  
+testWs.onopen = () => { status.textContent = '✅ 可直连（已开代理）'; status.style.color = '#0ecb81'; testWs.close(); };  
+testWs.onerror = () => { status.textContent = '❌ 无法直连（请开代理）'; status.style.color = '#f6465d'; testWs.close(); };  
+setTimeout(() => { testWs.close(); }, 3000);  
 } catch(error) { status.textContent = '❌ 无法直连（请开代理）'; status.style.color = '#f6465d'; }  
 }  
   
@@ -354,15 +354,6 @@ searchResults = allSymbols.filter(s => s.base.includes(input)).slice(0, 50);
 renderSymbolList(searchResults);  
 }  
   
-// 失去焦点时自动选择第一个  
-function autoSelectFirst() {  
-setTimeout(() => {  
-if(searchResults.length > 0 && document.getElementById('symbol-search').value.length > 0) {  
-// 不自动选择，让用户手动点  
-}  
-}, 200);  
-}  
-  
 // 按回车选择第一个匹配的  
 function selectFirstMatch() {  
 if(searchResults.length > 0) {  
@@ -371,6 +362,7 @@ selectSymbol(searchResults[0].symbol);
 }  
   
 function selectSymbol(symbol) {  
+console.log('切换币种:', symbol);  
 currentSymbol = symbol;  
 document.getElementById('selected-symbol').value = symbol;  
 document.getElementById('symbol-search').value = symbol.replace('USDT','');  
@@ -383,8 +375,16 @@ document.getElementById('volume-ratio').innerHTML = '<span class="loading-hint">
 document.getElementById('ma5').innerHTML = '<span class="loading-hint">计算中...</span>';  
 document.getElementById('ma20').innerHTML = '<span class="loading-hint">计算中...</span>';  
 updateCurrentSymbolDisplay();  
+  
+// 强制重新连接 WebSocket  
+if(ws) {  
+ws.close();  
+ws = null;  
+}  
+setTimeout(() => {  
 connectWebSocket();  
 addLog(`切换币种：${symbol}`, 'normal');  
+}, 100);  
 }  
   
 function updateCurrentSymbolDisplay() {  
@@ -405,24 +405,55 @@ addLog(`切换周期：${currentInterval}`, 'normal');
 }  
   
 function connectWebSocket() {  
-if(ws && ws.readyState === WebSocket.OPEN) return;  
-if(ws) { ws.close(); ws = null; }  
+console.log('连接 WebSocket:', currentSymbol);  
+  
+// 强制关闭旧连接  
+if(ws) {  
+ws.close();  
+ws = null;  
+}  
+  
 try {  
 ws = new WebSocket('wss://stream.binance.com:9443/ws/' + currentSymbol.toLowerCase() + '@ticker');  
+  
 ws.onopen = () => {  
+console.log('WebSocket 已连接:', currentSymbol);  
 isConnected = true;  
 document.getElementById('ws-status').className = 'status-dot status-on';  
 document.getElementById('connection-text').textContent = '实时连接';  
 document.getElementById('connection-status').textContent = '✅ 实时数据';  
 addLog(`已连接：${currentSymbol}`, 'normal');  
 };  
-ws.onmessage = (event) => { const data = JSON.parse(event.data); updatePrice(data); };  
+  
+ws.onmessage = (event) => {  
+const data = JSON.parse(event.data);  
+console.log('收到数据:', currentSymbol, data.c);  
+updatePrice(data);  
+};  
+  
 ws.onclose = () => {  
-setTimeout(() => { if(!isConnected || (ws && ws.readyState !== WebSocket.OPEN)) { isConnected = false; document.getElementById('ws-status').className = 'status-dot status-off'; document.getElementById('connection-text').textContent = '已断开'; } }, 2000);  
+console.log('WebSocket 已断开:', currentSymbol);  
+setTimeout(() => {  
+if(!isConnected || !ws) {  
+isConnected = false;  
+document.getElementById('ws-status').className = 'status-dot status-off';  
+document.getElementById('connection-text').textContent = '已断开';  
+}  
+}, 2000);  
 setTimeout(connectWebSocket, 5000);  
 };  
-ws.onerror = () => { document.getElementById('connection-status').textContent = '❌ 请开启代理'; };  
-} catch(error) { console.error('WebSocket 错误:', error); isConnected = false; document.getElementById('ws-status').className = 'status-dot status-off'; document.getElementById('connection-text').textContent = '连接失败'; }  
+  
+ws.onerror = () => {  
+console.error('WebSocket 错误:', currentSymbol);  
+document.getElementById('connection-status').textContent = '❌ 请开启代理';  
+};  
+  
+} catch(error) {  
+console.error('WebSocket 连接失败:', error);  
+isConnected = false;  
+document.getElementById('ws-status').className = 'status-dot status-off';  
+document.getElementById('connection-text').textContent = '连接失败';  
+}  
 }  
   
 function updatePrice(data) {  
