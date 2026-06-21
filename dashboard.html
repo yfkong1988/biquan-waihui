@@ -9,182 +9,37 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }  
 body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f5f5f5; min-height: 100vh; padding: 20px; }  
 .container { max-width: 1400px; margin: 0 auto; }  
-  
-/* 顶部横幅 */  
-.top-banner {  
-display: flex;  
-justify-content: space-between;  
-align-items: center;  
-padding: 15px 30px;  
-background: #fff;  
-border: 2px dashed #f0b90b;  
-border-radius: 8px;  
-margin-bottom: 20px;  
-}  
+.top-banner { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background: #fff; border: 2px dashed #f0b90b; border-radius: 8px; margin-bottom: 20px; }  
 .top-banner .hint { color: #666; font-size: 14px; }  
-.top-banner .title {  
-font-size: 24px;  
-color: #f0b90b;  
-font-weight: bold;  
-border: 2px dashed #f0b90b;  
-padding: 5px 20px;  
-}  
-.top-banner .logout {  
-color: #666;  
-cursor: pointer;  
-border: 2px dashed #ccc;  
-padding: 5px 15px;  
-}  
+.top-banner .title { font-size: 24px; color: #f0b90b; font-weight: bold; border: 2px dashed #f0b90b; padding: 5px 20px; }  
+.top-banner .logout { color: #666; cursor: pointer; border: 2px dashed #ccc; padding: 5px 15px; }  
 .top-banner .logout:hover { border-color: #f0b90b; color: #f0b90b; }  
-  
-/* 三个信息卡片 */  
-.info-cards {  
-display: grid;  
-grid-template-columns: repeat(3, 1fr);  
-gap: 20px;  
-margin-bottom: 20px;  
-}  
-.info-card {  
-background: #fff;  
-border: 1px solid #ddd;  
-border-radius: 8px;  
-padding: 20px;  
-}  
-.info-card h3 {  
-font-size: 16px;  
-color: #333;  
-margin-bottom: 15px;  
-border-left: 3px solid #f0b90b;  
-padding-left: 10px;  
-}  
-.info-card .content {  
-font-size: 13px;  
-color: #666;  
-line-height: 1.8;  
-}  
-.info-card .content .item {  
-padding: 5px 10px;  
-border: 1px dashed #ddd;  
-margin-bottom: 8px;  
-}  
-  
-/* 筛选和下载栏 */  
-.filter-bar {  
-display: flex;  
-justify-content: space-between;  
-align-items: center;  
-background: #fff;  
-border: 1px solid #ddd;  
-border-radius: 8px;  
-padding: 15px 20px;  
-margin-bottom: 20px;  
-}  
-.filter-left, .filter-right {  
-display: flex;  
-align-items: center;  
-gap: 10px;  
-}  
-.filter-bar label {  
-color: #666;  
-font-size: 14px;  
-}  
-.filter-bar input, .filter-bar select {  
-padding: 8px 12px;  
-border: 1px solid #ddd;  
-border-radius: 4px;  
-font-size: 14px;  
-}  
-.filter-bar button {  
-padding: 8px 20px;  
-background: #f0b90b;  
-border: none;  
-border-radius: 4px;  
-color: #fff;  
-font-weight: bold;  
-cursor: pointer;  
-}  
+.info-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }  
+.info-card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; }  
+.info-card h3 { font-size: 16px; color: #333; margin-bottom: 15px; border-left: 3px solid #f0b90b; padding-left: 10px; }  
+.info-card .content { font-size: 13px; color: #666; line-height: 1.8; }  
+.info-card .content .item { padding: 5px 10px; border: 1px dashed #ddd; margin-bottom: 8px; }  
+.filter-bar { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 15px 20px; margin-bottom: 20px; }  
+.filter-left, .filter-right { display: flex; align-items: center; gap: 10px; }  
+.filter-bar label { color: #666; font-size: 14px; }  
+.filter-bar input, .filter-bar select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }  
+.filter-bar button { padding: 8px 20px; background: #f0b90b; border: none; border-radius: 4px; color: #fff; font-weight: bold; cursor: pointer; }  
 .filter-bar button:hover { background: #f5a623; }  
-  
-/* 数据展示框 */  
-.data-box {  
-background: #fff;  
-border: 2px solid #ddd;  
-border-radius: 8px;  
-padding: 20px;  
-margin-bottom: 20px;  
-min-height: 200px;  
-}  
-.data-box .section {  
-margin-bottom: 15px;  
-}  
-.data-box .section-title {  
-font-weight: bold;  
-color: #333;  
-margin-bottom: 5px;  
-}  
-.data-box .section-content {  
-color: #666;  
-font-size: 14px;  
-line-height: 1.6;  
-}  
-  
-/* 主内容区 */  
-.main-content {  
-background: #fff;  
-border: 1px solid #ddd;  
-border-radius: 8px;  
-padding: 20px;  
-}  
-.controls-grid {  
-display: grid;  
-grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));  
-gap: 15px;  
-margin-bottom: 20px;  
-}  
-.control-card {  
-background: #f9f9f9;  
-border-radius: 8px;  
-padding: 15px;  
-}  
-.control-card label {  
-display: block;  
-margin-bottom: 8px;  
-color: #f0b90b;  
-font-weight: bold;  
-}  
-.control-card select, .control-card input {  
-width: 100%;  
-padding: 10px;  
-border: 2px solid #f0b90b;  
-border-radius: 6px;  
-font-size: 14px;  
-}  
+.data-box { background: #fff; border: 2px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px; min-height: 200px; }  
+.data-box .section { margin-bottom: 15px; }  
+.data-box .section-title { font-weight: bold; color: #333; margin-bottom: 5px; }  
+.data-box .section-content { color: #666; font-size: 14px; line-height: 1.6; }  
+.main-content { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; }  
+.controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }  
+.control-card { background: #f9f9f9; border-radius: 8px; padding: 15px; }  
+.control-card label { display: block; margin-bottom: 8px; color: #f0b90b; font-weight: bold; }  
+.control-card select, .control-card input { width: 100%; padding: 10px; border: 2px solid #f0b90b; border-radius: 6px; font-size: 14px; }  
 .search-box { position: relative; }  
-.search-results {  
-position: absolute;  
-top: 100%;  
-left: 0;  
-right: 0;  
-background: #fff;  
-border: 2px solid #f0b90b;  
-border-radius: 6px;  
-max-height: 300px;  
-overflow-y: auto;  
-z-index: 1000;  
-display: none;  
-}  
+.search-results { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 2px solid #f0b90b; border-radius: 6px; max-height: 300px; overflow-y: auto; z-index: 1000; display: none; }  
 .search-results.show { display: block; }  
 .search-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }  
 .search-item:hover { background: #f0b90b22; }  
-.current-symbol-display {  
-background: #f0b90b22;  
-border: 2px solid #f0b90b;  
-border-radius: 6px;  
-padding: 8px 12px;  
-margin-top: 10px;  
-font-weight: bold;  
-color: #f0b90b;  
-}  
+.current-symbol-display { background: #f0b90b22; border: 2px solid #f0b90b; border-radius: 6px; padding: 8px 12px; margin-top: 10px; font-weight: bold; color: #f0b90b; }  
 .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }  
 .card { background: #f9f9f9; border-radius: 8px; padding: 20px; border: 1px solid #ddd; }  
 .card h3 { color: #f0b90b; margin-bottom: 15px; font-size: 16px; }  
@@ -206,57 +61,16 @@ color: #f0b90b;
 .status-off { background: #f6465d; }  
 .update-time { font-size: 12px; color: #999; margin-top: 10px; text-align: right; }  
 .loading-hint { color: #999; font-style: italic; font-size: 12px; }  
-  
-/* 密码验证页面 */  
-#login-overlay {  
-position: fixed;  
-top: 0; left: 0; right: 0; bottom: 0;  
-background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);  
-display: flex;  
-align-items: center;  
-justify-content: center;  
-z-index: 9999;  
-}  
-.login-box {  
-background: #fff;  
-padding: 40px;  
-border-radius: 12px;  
-box-shadow: 0 10px 40px rgba(0,0,0,0.3);  
-text-align: center;  
-max-width: 400px;  
-width: 90%;  
-}  
+#login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }  
+.login-box { background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); text-align: center; max-width: 400px; width: 90%; }  
 .login-box h2 { color: #f0b90b; margin-bottom: 20px; }  
-.login-box input {  
-width: 100%;  
-padding: 15px;  
-border: 2px solid #f0b90b;  
-border-radius: 8px;  
-font-size: 16px;  
-margin-bottom: 20px;  
-}  
-.login-box button {  
-width: 100%;  
-padding: 15px;  
-background: #f0b90b;  
-border: none;  
-border-radius: 8px;  
-color: #fff;  
-font-size: 16px;  
-font-weight: bold;  
-cursor: pointer;  
-}  
+.login-box input { width: 100%; padding: 15px; border: 2px solid #f0b90b; border-radius: 8px; font-size: 16px; margin-bottom: 20px; }  
+.login-box button { width: 100%; padding: 15px; background: #f0b90b; border: none; border-radius: 8px; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; }  
 .login-error { color: #f6465d; margin-top: 10px; display: none; }  
-  
-@media (max-width: 900px) {  
-.info-cards { grid-template-columns: 1fr; }  
-.main-grid { grid-template-columns: 1fr; }  
-.filter-bar { flex-direction: column; gap: 15px; }  
-}  
+@media (max-width: 900px) { .info-cards { grid-template-columns: 1fr; } .main-grid { grid-template-columns: 1fr; } .filter-bar { flex-direction: column; gap: 15px; } }  
 </style>  
 </head>  
 <body>  
-<!-- 密码验证 -->  
 <div id="login-overlay">  
 <div class="login-box">  
 <h2>🔐 盯盘助手 - 登录</h2>  
@@ -266,16 +80,12 @@ cursor: pointer;
 </div>  
 </div>  
   
-<!-- 主内容 -->  
 <div class="container" id="main-content" style="display:none">  
-<!-- 顶部横幅 -->  
 <div class="top-banner">  
 <div class="hint">💡 提示：开启代理可获得实时数据</div>  
 <div class="title">盯盘助手 - 专业版</div>  
 <div class="logout" onclick="logout()">退出登录</div>  
 </div>  
-  
-<!-- 三个信息卡片 -->  
 <div class="info-cards">  
 <div class="info-card">  
 <h3>📅 宏观时间轴</h3>  
@@ -288,19 +98,13 @@ cursor: pointer;
 </div>  
 <div class="info-card">  
 <h3>📰 实时资讯</h3>  
-<div class="content" id="realtime-news">  
-<div class="item">加载中...</div>  
-</div>  
+<div class="content" id="realtime-news"><div class="item">加载中...</div></div>  
 </div>  
 <div class="info-card">  
 <h3>🔮 未来 24 小时咨询</h3>  
-<div class="content" id="future-events">  
-<div class="item">加载中...</div>  
+<div class="content" id="future-events"><div class="item">加载中...</div></div>  
 </div>  
 </div>  
-</div>  
-  
-<!-- 筛选和下载栏 -->  
 <div class="filter-bar">  
 <div class="filter-left">  
 <label>币种选择：</label>  
@@ -332,36 +136,14 @@ cursor: pointer;
 <button onclick="downloadData()">开始下载</button>  
 </div>  
 </div>  
-  
-<!-- 数据展示框 -->  
 <div class="data-box">  
-<div class="section">  
-<div class="section-title">净流入：</div>  
-<div class="section-content" id="data-inflow">--</div>  
+<div class="section"><div class="section-title">净流入：</div><div class="section-content" id="data-inflow">--</div></div>  
+<div class="section"><div class="section-title">净流出：</div><div class="section-content" id="data-outflow">--</div></div>  
+<div class="section"><div class="section-title">巨鲸异动：</div><div class="section-content" id="data-whale">--</div></div>  
+<div class="section"><div class="section-title">稳定币流动：</div><div class="section-content" id="data-stablecoin">--</div></div>  
+<div class="section"><div class="section-title">DXY 美指走势：</div><div class="section-content" id="data-dxy">--</div></div>  
+<div class="section"><div class="section-title">Coinbase 溢价：</div><div class="section-content" id="data-premium">--</div></div>  
 </div>  
-<div class="section">  
-<div class="section-title">净流出：</div>  
-<div class="section-content" id="data-outflow">--</div>  
-</div>  
-<div class="section">  
-<div class="section-title">巨鲸异动：</div>  
-<div class="section-content" id="data-whale">--</div>  
-</div>  
-<div class="section">  
-<div class="section-title">稳定币流动：</div>  
-<div class="section-content" id="data-stablecoin">USDT/USDC 明显上涨或下跌</div>  
-</div>  
-<div class="section">  
-<div class="section-title">DXY 美指走势：</div>  
-<div class="section-content" id="data-dxy">--</div>  
-</div>  
-<div class="section">  
-<div class="section-title">Coinbase 溢价：</div>  
-<div class="section-content" id="data-premium">--</div>  
-</div>  
-</div>  
-  
-<!-- 主内容区 -->  
 <div class="main-content">  
 <div class="controls-grid">  
 <div class="control-card" style="position:relative">  
@@ -376,8 +158,8 @@ cursor: pointer;
 <option value="ai">AI</option>  
 <option value="gaming">GameFi</option>  
 </select>  
-<button onclick="toggleSymbolList()" class="btn" style="flex:1;padding:8px;background:#f0b90b;border:none;border-radius:6px;color:#fff;cursor:pointer">选择币种 ▼</button>  
-<button onclick="refreshSymbol()" class="btn" style="padding:8px 15px;background:#0ecb81;border:none;border-radius:6px;color:#fff;cursor:pointer">🔄 刷新</button>  
+<button onclick="toggleSymbolList()" style="flex:1;padding:8px;background:#f0b90b;border:none;border-radius:6px;color:#fff;cursor:pointer">选择币种 ▼</button>  
+<button onclick="refreshSymbol()" style="padding:8px 15px;background:#0ecb81;border:none;border-radius:6px;color:#fff;cursor:pointer">🔄 刷新</button>  
 </div>  
 <input type="text" id="symbol-search" placeholder="🔍 搜索币种（输入后按回车或点击列表）" oninput="searchSymbol()" onkeypress="if(event.keyCode===13) selectFirstMatch()" style="width:100%;padding:10px;border:2px solid #f0b90b;border-radius:6px">  
 <div class="current-symbol-display">当前币种：<span id="current-symbol-display">BTC/USDT</span></div>  
@@ -414,7 +196,6 @@ cursor: pointer;
 </select>  
 </div>  
 </div>  
-  
 <div class="main-grid">  
 <div class="card">  
 <h3>📊 实时行情</h3>  
@@ -434,7 +215,6 @@ cursor: pointer;
 <div class="info-item"><span>MA20</span><span id="ma20"><span class="loading-hint">计算中...</span></span></div>  
 </div>  
 </div>  
-  
 <div style="margin-bottom:20px">  
 <h3 style="color:#f0b90b;margin-bottom:15px">🎯 趋势预警</h3>  
 <div id="trend-container">  
@@ -445,15 +225,10 @@ cursor: pointer;
 <div class="trend-item trend-pullback"><div class="trend-title">📊 回调预警</div><div class="trend-desc" id="trend-pullback-desc"><span class="loading-hint">等待数据...</span></div></div>  
 </div>  
 </div>  
-  
-<div class="card">  
-<h3>📝 信号日志</h3>  
-<div id="log-container" class="log-box"></div>  
-</div>  
+<div class="card"><h3>📝 信号日志</h3><div id="log-container" class="log-box"></div></div>  
 </div>  
 </div>  
   
-<!-- 依赖库 -->  
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js "></script>  
 <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js "></script>  
 <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment-with-locales.min.js "></script>  
@@ -461,8 +236,21 @@ cursor: pointer;
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js "></script>  
   
 <script>  
-// ========== 密码验证 ==========  
+// 变量声明（必须在最前面）  
+let currentSymbol = 'BTCUSDT';  
+let currentInterval = '1h';  
+let priceHistory = [];  
+let ws = null;  
+let isConnected = false;  
+let allSymbols = [];  
+let searchResults = [];  
 const ACCESS_PASSWORD = 'a19880819';  
+const binanceBase = 'https://api.binance.com';  
+const mainCoins = ['BTC','ETH','BNB','XRP','SOL','ADA','DOGE','AVAX','DOT','MATIC','LINK','UNI','LTC','ATOM','ETC'];  
+const newCoins = ['REZ','ASM','STX','GLM','ADB','UVXY','BMNR','EWZ','XLE','GME','RIVN','DKNG'];  
+const categoryMap = {'defi': ['UNI','AAVE','MKR','SNX','CRV','COMP','SUSHI','YFI'], 'meme': ['DOGE','SHIB','PEPE','FLOKI','BONK','WIF'], 'ai': ['FET','AGIX','OCEAN','RNDR','INJ','ARKM'], 'gaming': ['AXS','SAND','MANA','GALA','IMX','ENJ','ALICE']};  
+  
+// 密码验证  
 function checkPassword() {  
 const input = document.getElementById('login-password').value;  
 if(input === ACCESS_PASSWORD) {  
@@ -474,17 +262,18 @@ initApp();
 document.getElementById('login-error').style.display = 'block';  
 }  
 }  
+  
 if(localStorage.getItem('authenticated') === 'true') {  
 document.getElementById('login-overlay').style.display = 'none';  
 document.getElementById('main-content').style.display = 'block';  
 initApp();  
 }  
+  
 function logout() {  
 localStorage.removeItem('authenticated');  
 location.reload();  
 }  
   
-// ========== 主应用 ==========  
 function initApp() {  
 loadSymbols();  
 connectWebSocket();  
@@ -493,15 +282,6 @@ updateDataBox();
 addLog('系统启动', 'normal');  
 }  
   
-let currentSymbol = 'BTCUSDT', currentInterval = '1h';  
-let priceHistory = [], ws = null, isConnected = false;  
-let allSymbols = [], searchResults = [];  
-const binanceBase = 'https://api.binance.com';  
-const mainCoins = ['BTC','ETH','BNB','XRP','SOL','ADA','DOGE','AVAX','DOT','MATIC','LINK','UNI','LTC','ATOM','ETC'];  
-const newCoins = ['REZ','ASM','STX','GLM','ADB','UVXY','BMNR','EWZ','XLE','GME','RIVN','DKNG'];  
-const categoryMap = {'defi': ['UNI','AAVE','MKR','SNX','CRV','COMP','SUSHI','YFI'], 'meme': ['DOGE','SHIB','PEPE','FLOKI','BONK','WIF'], 'ai': ['FET','AGIX','OCEAN','RNDR','INJ','ARKM'], 'gaming': ['AXS','SAND','MANA','GALA','IMX','ENJ','ALICE']};  
-  
-// 倒计时  
 function initCountdown() {  
 const now = new Date();  
 const mofc = new Date('2026-07-15');  
@@ -512,21 +292,10 @@ document.getElementById('days-mofc').textContent = Math.ceil((mofc - now) / 8640
 document.getElementById('days-cpi').textContent = Math.ceil((cpi - now) / 86400000) + '天';  
 document.getElementById('days-nfp').textContent = Math.ceil((nfp - now) / 86400000) + '天';  
 document.getElementById('days-powell').textContent = Math.ceil((powell - now) / 86400000) + '天';  
-  
-// 实时资讯  
-document.getElementById('realtime-news').innerHTML = `  
-<div class="item">📍 北京时间${now.getMonth()+1}月${now.getDate()}号 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}，市场波动加剧</div>  
-<div class="item">📍 美联储官员讲话，关注利率政策</div>  
-`;  
-  
-// 未来事件  
-document.getElementById('future-events').innerHTML = `  
-<div class="item">📅 北京时间${mofc.getMonth()+1}月${mofc.getDate()}日，FOMC 利率决议</div>  
-<div class="item">📅 北京时间${cpi.getMonth()+1}月${cpi.getDate()}日，CPI 数据公布</div>  
-`;  
+document.getElementById('realtime-news').innerHTML = '<div class="item">📍 北京时间'+(now.getMonth()+1)+'月'+now.getDate()+'号 '+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0')+'，市场波动加剧</div><div class="item">📍 美联储官员讲话，关注利率政策</div>';  
+document.getElementById('future-events').innerHTML = '<div class="item">📅 北京时间'+(mofc.getMonth()+1)+'月'+mofc.getDate()+'日，FOMC 利率决议</div><div class="item">📅 北京时间'+(cpi.getMonth()+1)+'月'+cpi.getDate()+'日，CPI 数据公布</div>';  
 }  
   
-// 更新数据框  
 function updateDataBox() {  
 document.getElementById('data-inflow').textContent = '$' + (Math.random() * 1000).toFixed(2) + 'M';  
 document.getElementById('data-outflow').textContent = '$' + (Math.random() * 800).toFixed(2) + 'M';  
@@ -534,6 +303,7 @@ document.getElementById('data-whale').textContent = Math.random() > 0.5 ? '⚠�
 document.getElementById('data-stablecoin').textContent = Math.random() > 0.5 ? '📈 USDT 明显上涨' : '📉 USDC 轻微下跌';  
 document.getElementById('data-dxy').textContent = (95 + Math.random() * 10).toFixed(2) + (Math.random() > 0.5 ? ' ↑' : ' ↓');  
 document.getElementById('data-premium').textContent = (Math.random() * 2 - 1).toFixed(2) + '%';  
+setInterval(updateDataBox, 5000);  
 }  
   
 async function loadSymbols() {  
@@ -564,7 +334,7 @@ renderSymbolList(filtered.slice(0, 100));
 function renderSymbolList(symbols) {  
 const content = document.getElementById('symbol-list-content');  
 if(symbols.length === 0) { content.innerHTML = '<div style="padding:20px;text-align:center;color:#999">暂无数据</div>'; return; }  
-content.innerHTML = symbols.map(s => `<div onclick="selectSymbol('${s.symbol}')" style="padding:12px 15px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background='#f0b90b11'" onmouseout="this.style.background='white'"><div style="display:flex;align-items:center;gap:10px"><span style="font-weight:bold;color:#333">${s.base}</span><span style="color:#999;font-size:12px">/USDT</span>${mainCoins.includes(s.base) ? '<span style="background:#f0b90b22;color:#f0b90b;padding:2px 6px;border-radius:4px;font-size:10px">主流</span>' : ''}${newCoins.includes(s.base) ? '<span style="background:#0ecb8122;color:#0ecb81;padding:2px 6px;border-radius:4px;font-size:10px">新币</span>' : ''}</div><span style="color:#999;font-size:12px">点击选择</span></div>`).join('');  
+content.innerHTML = symbols.map(s => '<div onclick="selectSymbol(\''+s.symbol+'\')" style="padding:12px 15px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background=\'#f0b90b11\'" onmouseout="this.style.background=\'white\'"><div style="display:flex;align-items:center;gap:10px"><span style="font-weight:bold;color:#333">'+s.base+'</span><span style="color:#999;font-size:12px">/USDT</span>'+(mainCoins.includes(s.base) ? '<span style="background:#f0b90b22;color:#f0b90b;padding:2px 6px;border-radius:4px;font-size:10px">主流</span>' : '')+(newCoins.includes(s.base) ? '<span style="background:#0ecb8122;color:#0ecb81;padding:2px 6px;border-radius:4px;font-size:10px">新币</span>' : '')+'</div><span style="color:#999;font-size:12px">点击选择</span></div>').join('');  
 }  
   
 function quickSelect(symbol) { selectSymbol(symbol); }  
@@ -593,7 +363,7 @@ priceHistory = [];
 document.getElementById('current-price').innerHTML = '<span class="loading-hint">等待数据...</span>';  
 updateCurrentSymbolDisplay();  
 if(ws) { ws.close(); ws = null; }  
-setTimeout(() => { connectWebSocket(); addLog(`切换币种：${symbol}`, 'normal'); }, 100);  
+setTimeout(function() { connectWebSocket(); addLog('切换币种：'+symbol, 'normal'); }, 100);  
 }  
   
 function updateCurrentSymbolDisplay() {  
@@ -609,7 +379,7 @@ selectSymbol(symbol);
 function changeInterval() {  
 currentInterval = document.getElementById('interval-select').value;  
 priceHistory = [];  
-addLog(`切换周期：${currentInterval}`, 'normal');  
+addLog('切换周期：'+currentInterval, 'normal');  
 }  
   
 function searchData() {  
@@ -618,7 +388,7 @@ const interval = document.getElementById('quick-interval-select').value;
 selectSymbol(symbol);  
 currentInterval = interval;  
 document.getElementById('interval-select').value = interval;  
-addLog(`搜索：${symbol} ${interval}`, 'normal');  
+addLog('搜索：'+symbol+' '+interval, 'normal');  
 }  
   
 function connectWebSocket() {  
@@ -626,19 +396,22 @@ console.log('连接 WebSocket:', currentSymbol);
 if(ws) { ws.close(); ws = null; }  
 try {  
 ws = new WebSocket('wss://stream.binance.com:9443/ws/' + currentSymbol.toLowerCase() + '@ticker');  
-ws.onopen = () => {  
+ws.onopen = function() {  
 console.log('WebSocket 已连接:', currentSymbol);  
 isConnected = true;  
 document.getElementById('ws-status').className = 'status-dot status-on';  
 document.getElementById('connection-text').textContent = '实时连接';  
-addLog(`已连接：${currentSymbol}`, 'normal');  
+addLog('已连接：'+currentSymbol, 'normal');  
 };  
-ws.onmessage = (event) => { const data = JSON.parse(event.data); updatePrice(data); };  
-ws.onclose = () => {  
-setTimeout(() => { if(!isConnected || !ws) { isConnected = false; document.getElementById('ws-status').className = 'status-dot status-off'; document.getElementById('connection-text').textContent = '已断开'; } }, 2000);  
+ws.onmessage = function(event) {  
+const data = JSON.parse(event.data);  
+updatePrice(data);  
+};  
+ws.onclose = function() {  
+setTimeout(function() { if(!isConnected || !ws) { isConnected = false; document.getElementById('ws-status').className = 'status-dot status-off'; document.getElementById('connection-text').textContent = '已断开'; } }, 2000);  
 setTimeout(connectWebSocket, 5000);  
 };  
-ws.onerror = () => { document.getElementById('connection-text').textContent = '连接失败'; };  
+ws.onerror = function() { document.getElementById('connection-text').textContent = '连接失败'; };  
 } catch(error) {  
 console.error('WebSocket 错误:', error);  
 isConnected = false;  
@@ -676,23 +449,22 @@ const ma20 = calculateMA(priceHistory, 20);
 document.getElementById('ma5').textContent = '$' + ma5.toFixed(2);  
 document.getElementById('ma20').textContent = '$' + ma20.toFixed(2);  
 generateTrends(price, rsi, ma5, ma20, volumeRatio);  
-updateDataBox();  
 }  
   
 function calculateRSI(prices) { if(prices.length < 15) return 50; let gains = 0, losses = 0; for(let i = prices.length - 14; i < prices.length; i++) { const diff = prices[i] - prices[i-1]; if(diff > 0) gains += diff; else losses -= diff; } const avgGain = gains / 14; const avgLoss = losses / 14; if(avgLoss === 0) return 100; return 100 - (100 / (1 + avgGain / avgLoss)); }  
-function calculateMA(prices, period) { if(prices.length < period) return prices[prices.length-1] || 0; const slice = prices.slice(-period); return slice.reduce((a,b) => a+b, 0) / period; }  
+function calculateMA(prices, period) { if(prices.length < period) return prices[prices.length-1] || 0; const slice = prices.slice(-period); return slice.reduce(function(a,b) { return a+b; }, 0) / period; }  
   
 function generateTrends(price, rsi, ma5, ma20, volumeRatio) {  
 const longDesc = document.getElementById('trend-long-desc');  
-if(rsi < 30 && price > ma5) { longDesc.innerHTML = `预计 30 分钟后多头拉升 信心：${75 + Math.floor(Math.random() * 20)}% <span class="trend-detail-btn" onclick="alert('RSI 超卖 + 站上 MA5')">详情</span>`; } else { longDesc.textContent = '暂无明确信号'; }  
+if(rsi < 30 && price > ma5) { longDesc.innerHTML = '预计 30 分钟后多头拉升 信心：'+(75 + Math.floor(Math.random() * 20))+'% <span class="trend-detail-btn" onclick="alert(\'RSI 超卖 + 站上 MA5\')">详情</span>'; } else { longDesc.textContent = '暂无明确信号'; }  
 const shortDesc = document.getElementById('trend-short-desc');  
-if(rsi > 70 && price < ma5) { shortDesc.innerHTML = `预计 30 分钟后空头打压 信心：${75 + Math.floor(Math.random() * 20)}% <span class="trend-detail-btn" onclick="alert('RSI 超买 + 跌破 MA5')">详情</span>`; } else { shortDesc.textContent = '暂无明确信号'; }  
+if(rsi > 70 && price < ma5) { shortDesc.innerHTML = '预计 30 分钟后空头打压 信心：'+(75 + Math.floor(Math.random() * 20))+'% <span class="trend-detail-btn" onclick="alert(\'RSI 超买 + 跌破 MA5\')">详情</span>'; } else { shortDesc.textContent = '暂无明确信号'; }  
 const dumpDesc = document.getElementById('trend-dump-desc');  
-if(price < ma20 * 0.98 && volumeRatio > 2) { dumpDesc.innerHTML = `预计 60 分钟后砸盘风险 信心：${80 + Math.floor(Math.random() * 15)}%`; } else { dumpDesc.textContent = '暂无明确信号'; }  
+if(price < ma20 * 0.98 && volumeRatio > 2) { dumpDesc.innerHTML = '预计 60 分钟后砸盘风险 信心：'+(80 + Math.floor(Math.random() * 15))+'%'; } else { dumpDesc.textContent = '暂无明确信号'; }  
 const vDesc = document.getElementById('trend-v-desc');  
-if(price < ma20 * 0.95 && rsi < 25) { vDesc.innerHTML = `预计 90 分钟后 V 转反弹 信心：${70 + Math.floor(Math.random() * 20)}%`; } else { vDesc.textContent = '暂无明确信号'; }  
+if(price < ma20 * 0.95 && rsi < 25) { vDesc.innerHTML = '预计 90 分钟后 V 转反弹 信心：'+(70 + Math.floor(Math.random() * 20))+'%'; } else { vDesc.textContent = '暂无明确信号'; }  
 const pullbackDesc = document.getElementById('trend-pullback-desc');  
-if(price > ma20 * 1.05 && rsi > 65) { pullbackDesc.innerHTML = `预计 45 分钟后回调风险 信心：${75 + Math.floor(Math.random() * 20)}%`; } else { pullbackDesc.textContent = '暂无明确信号'; }  
+if(price > ma20 * 1.05 && rsi > 65) { pullbackDesc.innerHTML = '预计 45 分钟后回调风险 信心：'+(75 + Math.floor(Math.random() * 20))+'%'; } else { pullbackDesc.textContent = '暂无明确信号'; }  
 }  
   
 async function downloadData() {  
@@ -703,13 +475,13 @@ const startMs = new Date(startTime).getTime();
 const endMs = new Date(endTime).getTime();  
 if(startMs >= endMs) { alert('开始时间必须早于结束时间！'); return; }  
 const interval = document.getElementById('quick-interval-select').value;  
-addLog(`开始下载 ${currentSymbol} ${interval} 历史数据...`, 'normal');  
+addLog('开始下载 '+currentSymbol+' '+interval+' 历史数据...', 'normal');  
 try {  
 const intervalMs = getIntervalMs(interval);  
 const klines = [];  
 let currentTime = startMs;  
 while(currentTime < endMs) {  
-const url = `${binanceBase}/api/v3/klines?symbol=${currentSymbol}&interval=${interval}&startTime=${currentTime}&endTime=${endMs}&limit=1000`;  
+const url = binanceBase+'/api/v3/klines?symbol='+currentSymbol+'&interval='+interval+'&startTime='+currentTime+'&endTime='+endMs+'&limit=1000';  
 const response = await fetch(url);  
 const data = await response.json();  
 if(data.length === 0) break;  
@@ -718,22 +490,22 @@ currentTime = data[data.length-1][0] + intervalMs;
 if(data.length < 1000) break;  
 }  
 const data = [['币种', '时间', '开盘价', '最高价', '最低价', '收盘价', '成交量']];  
-klines.forEach(k => {  
+klines.forEach(function(k) {  
 const time = formatTime(k[0], interval);  
 data.push([currentSymbol, time, k[1], k[2], k[3], k[4], k[5]]);  
 });  
 const wb = XLSX.utils.book_new();  
 const ws = XLSX.utils.aoa_to_sheet(data);  
 XLSX.utils.book_append_sheet(wb, ws, '历史数据');  
-XLSX.writeFile(wb, `${currentSymbol}_${interval}_${startTime}_${endTime}.xlsx`);  
-addLog(`下载完成：${klines.length} 条数据`, 'normal');  
-} catch(error) { console.error('下载失败:', error); addLog('下载失败：' + error.message, 'warning'); }  
+XLSX.writeFile(wb, currentSymbol+'_'+interval+'_'+startTime+'_'+endTime+'.xlsx');  
+addLog('下载完成：'+klines.length+' 条数据', 'normal');  
+} catch(error) { console.error('下载失败:', error); addLog('下载失败：'+error.message, 'warning'); }  
 }  
   
 function getIntervalMs(interval) { const map = {'1M': 30*24*60*60*1000, '1W': 7*24*60*60*1000, '1d': 24*60*60*1000, '4h': 4*60*60*1000, '1h': 60*60*1000, '30m': 30*60*1000, '15m': 15*60*1000, '5m': 5*60*1000, '1m': 60*1000}; return map[interval] || 60*60*1000; }  
-function formatTime(timestamp, interval) { const date = new Date(timestamp); const y = date.getFullYear(); const m = String(date.getMonth() + 1).padStart(2, '0'); const d = String(date.getDate()).padStart(2, '0'); const h = String(date.getHours()).padStart(2, '0'); const min = String(date.getMinutes()).padStart(2, '0'); switch(interval) { case '1m': case '5m': case '15m': case '30m': return `${y}-${m}-${d} ${h}:${min}`; case '1h': case '4h': return `${y}-${m}-${d} ${h}:00`; case '1d': return `${y}-${m}-${d}`; case '1W': return `${y}年 W${getWeekNumber(date)}周`; case '1M': return `${y}-${m}`; default: return `${y}-${m}-${d} ${h}:${min}`; } }  
+function formatTime(timestamp, interval) { const date = new Date(timestamp); const y = date.getFullYear(); const m = String(date.getMonth() + 1).padStart(2, '0'); const d = String(date.getDate()).padStart(2, '0'); const h = String(date.getHours()).padStart(2, '0'); const min = String(date.getMinutes()).padStart(2, '0'); switch(interval) { case '1m': case '5m': case '15m': case '30m': return y+'-'+m+'-'+d+' '+h+':'+min; case '1h': case '4h': return y+'-'+m+'-'+d+' '+h+':00'; case '1d': return y+'-'+m+'-'+d; case '1W': return y+'年 W'+getWeekNumber(date)+'周'; case '1M': return y+'-'+m; default: return y+'-'+m+'-'+d+' '+h+':'+min; } }  
 function getWeekNumber(date) { const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())); const dayNum = d.getUTCDay() || 7; d.setUTCDate(d.getUTCDate() + 4 - dayNum); const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1)); return Math.ceil((((d - yearStart) / 86400000) + 1) / 7); }  
-function addLog(msg, type) { const c = document.getElementById('log-container'); const t = new Date().toLocaleTimeString('zh-CN', { hour12: false }); const item = document.createElement('div'); item.className = 'log-item'; item.innerHTML = '<span style="color:#888">[' + t + ']</span> ' + msg; c.insertBefore(item, c.firstChild); }  
+function addLog(msg, type) { const c = document.getElementById('log-container'); const t = new Date().toLocaleTimeString('zh-CN', { hour12: false }); const item = document.createElement('div'); item.className = 'log-item'; item.innerHTML = '<span style="color:#888">['+t+']</span> '+msg; c.insertBefore(item, c.firstChild); }  
 </script>  
 </body>  
 </html>  
