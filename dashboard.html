@@ -2,203 +2,83 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>订单流可视化盘面 (Order Flow)</title>
-    <!-- 引入 Lightweight Charts -->
+    <title>订单流可视化 - 演示版</title>
+    <!-- 引入强大的图表库 -->
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        body {
-            background-color: #131722; /* 深色背景 */
-            color: #d1d4dc;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            height: 95vh;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        h2 { margin: 0; color: #f0b90b; }
-        
-        .controls button {
-            background: #2a2e39;
-            border: 1px solid #434651;
-            color: white;
-            padding: 5px 15px;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-        .controls button:hover { background: #363a45; }
-
-        /* 主图表容器 */
-        #chart-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            border: 1px solid #2a2e39;
-        }
-
-        /* 模拟订单流热力图的覆盖层 (简化版) */
-        .heatmap-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+        body { margin: 0; padding: 0; background-color: #1e222d; color: #d1d4dc; font-family: sans-serif; overflow: hidden; }
+        #chart-container { width: 100vw; height: 90vh; position: relative; }
+        .header { padding: 10px 20px; background: #131722; border-bottom: 1px solid #2a2e39; display: flex; justify-content: space-between; align-items: center; }
+        h1 { margin: 0; font-size: 18px; color: #f0b90b; }
+        .status { font-size: 12px; color: #787b86; }
+        /* 模拟右侧的订单流热力图容器 */
+        #order-flow-panel {
+            position: absolute; right: 0; top: 0; bottom: 0; width: 150px;
+            background: rgba(30, 34, 45, 0.8); border-left: 1px solid #2a2e39;
             pointer-events: none; /* 让鼠标事件穿透到图表 */
-            opacity: 0.3;
-            background: repeating-linear-gradient(
-                90deg,
-                transparent,
-                transparent 19px,
-                rgba(255, 255, 255, 0.05) 20px
-            );
-        }
-        
-        .info-panel {
-            margin-top: 10px;
-            font-size: 12px;
-            color: #787b86;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h2>BTC/USDT 订单流视图</h2>
-        <div class="controls">
-            <button onclick="alert('这是演示版本，真实数据需要接入WebSocket')">连接实时数据</button>
-        </div>
-    </header>
+<div class="header">
+    <h1>BTC/USDT 订单流视图 (模拟演示)</h1>
+    <div class="status" id="status-text">正在初始化...</div>
+</div>
 
-    <div id="chart-container">
-        <!-- 图表将在这里渲染 -->
-    </div>
+<div id="chart-container"></div>
 
-    <div class="info-panel">
-        * 绿色代表主动买入强劲，红色代表主动卖出强劲。右侧直方图模拟成交量分布 (Volume Profile)。
-    </div>
+<script>
+    // 1. 初始化图表
+    const chartContainer = document.getElementById('chart-container');
+    const chart = LightweightCharts.createChart(chartContainer, {
+        layout: { background: { type: 'solid', color: '#1e222d' }, textColor: '#d1d4dc' },
+        grid: { vertLines: { color: '#2a2e39' }, horzLines: { color: '#2a2e39' } },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+        timeScale: { timeVisible: true, secondsVisible: true },
+    });
 
-    <script>
-        // 1. 初始化图表
-        const chartContainer = document.getElementById('chart-container');
-        const chart = LightweightCharts.createChart(chartContainer, {
-            layout: {
-                background: { type: 'solid', color: '#131722' },
-                textColor: '#d1d4dc',
-            },
-            grid: {
-                vertLines: { color: '#2B2B43' },
-                horzLines: { color: '#2B2B43' },
-            },
-            crosshair: {
-                mode: LightweightCharts.CrosshairMode.Normal,
-            },
-            priceScale: {
-                borderColor: '#485c7b',
-            },
-            timeScale: {
-                borderColor: '#485c7b',
-                timeVisible: true,
-            },
-        });
+    // 创建K线系列
+    const candleSeries = chart.addCandlestickSeries({
+        upColor: '#26a69a', downColor: '#ef5350', borderVisible: false, wickUpColor: '#26a69a', wickDownColor: '#ef5350',
+    });
 
-        // 2. 添加 K 线系列
-        const candleSeries = chart.addCandlestickSeries({
-            upColor: '#26a69a',
-            downColor: '#ef5350',
-            borderVisible: false,
-            wickUpColor: '#26a69a',
-            wickDownColor: '#ef5350',
-        });
+    // 2. 生成模拟数据 (为了让图表不空着)
+    let data = [];
+    let time = Math.floor(Date.now() / 1000) - 10000; // 从1万秒前开始
+    let price = 65000;
 
-        // 3. 生成模拟数据 (真实场景需替换为 API 数据)
-        // 这里的逻辑是生成一段随机的 K 线，并附带模拟的 Delta (买卖差)
-        function generateData() {
-            let data = [];
-            let time = new Date(Date.now() - 100 * 60 * 60 * 1000).getTime() / 1000; // 100小时前
-            let open = 60000;
-            
-            for (let i = 0; i < 100; i++) {
-                let up = Math.random() > 0.5;
-                let close = up ? open + Math.random() * 100 : open - Math.random() * 100;
-                let high = Math.max(open, close) + Math.random() * 50;
-                let low = Math.min(open, close) - Math.random() * 50;
-                
-                // 模拟 Delta: 正数为买盘强，负数为卖盘强
-                // 我们用这个值来决定 K 线的颜色深度或者额外的标记
-                let delta = (Math.random() - 0.5) * 1000; 
-
-                data.push({
-                    time: time + i * 3600,
-                    open: open,
-                    high: high,
-                    low: low,
-                    close: close,
-                    // 自定义字段，用于后续绘制热力图逻辑
-                    delta: delta 
-                });
-                open = close;
-            }
-            return data;
-        }
-
-        const rawData = generateData();
-        // 格式化数据给 Lightweight Charts
-        const chartData = rawData.map(d => ({
-            time: d.time,
-            open: d.open,
-            high: d.high,
-            low: d.low,
-            close: d.close
-        }));
-
-        candleSeries.setData(chartData);
-
-        // 4. 模拟 "足迹/热力" 效果
-        // 由于 Lightweight Charts 原生不支持 Footprint，我们用 Histogram (柱状图) 在底部模拟 Delta 力度
-        // 或者使用 Marker 在 K 线上标注大单
+    for (let i = 0; i < 1000; i++) {
+        let open = price;
+        let close = price + (Math.random() - 0.5) * 100;
+        let high = Math.max(open, close) + Math.random() * 50;
+        let low = Math.min(open, close) - Math.random() * 50;
         
-        const deltaSeries = chart.addHistogramSeries({
-            priceFormat: { type: 'volume' },
-            priceScaleId: '', // 设为空字符串，使其叠加在主图上，或者放在底部
-            scaleMargins: {
-                top: 0.8, // 把柱状图压到底部 20% 的区域
-                bottom: 0,
-            },
-        });
+        data.push({ time: time + i * 60, open, high, low, close });
+        price = close;
+    }
+    candleSeries.setData(data);
 
-        const deltaData = rawData.map(d => ({
-            time: d.time,
-            value: Math.abs(d.delta), // 柱子高度
-            color: d.delta > 0 ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)' // 绿买红卖
-        }));
-
-        deltaSeries.setData(deltaData);
-
-        // 5. 模拟右侧成交量分布 (Volume Profile)
-        // 这是一个简化的视觉欺骗，计算每个价格区间的出现次数
-        // 真实的 VP 需要遍历所有 Tick
-        const volumeProfile = [];
-        // 简单取几个关键价位模拟
-        [60000, 60100, 60200, 59900, 59800].forEach(price => {
-             // 这里的 logic 非常简化，仅作示意
-             // 实际应该统计该价格附近的成交量总和
-        });
+    // 3. 实时更新模拟数据
+    setInterval(() => {
+        const lastCandle = data[data.length - 1];
+        const newTime = lastCandle.time + 60;
+        const open = lastCandle.close;
+        const close = open + (Math.random() - 0.5) * 50;
+        const high = Math.max(open, close) + Math.random() * 20;
+        const low = Math.min(open, close) - Math.random() * 20;
         
-        // 自动调整大小
-        window.addEventListener('resize', () => {
-            chart.applyOptions({ width: chartContainer.clientWidth, height: chartContainer.clientHeight });
-        });
+        const newCandle = { time: newTime, open, high, low, close };
+        candleSeries.update(newCandle);
+        data.push(newCandle);
+        
+        document.getElementById('status-text').innerText = "当前状态：模拟数据运行中 (演示模式)";
+    }, 1000); // 每秒更新一次
 
-    </script>
+    // 窗口大小改变时自适应
+    window.addEventListener('resize', () => {
+        chart.applyOptions({ width: chartContainer.clientWidth, height: chartContainer.clientHeight });
+    });
+</script>
 </body>
 </html>
