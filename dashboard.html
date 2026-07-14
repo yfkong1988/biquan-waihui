@@ -3,155 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的极简盯盘助手</title>
+    <title>订单流可视化盘面 (Order Flow)</title>
+    <!-- 引入 Lightweight Charts -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        /* 页面基础样式 */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #121212; /*以此深色背景护眼*/
-            color: #e0e0e0;
+            background-color: #131722; /* 深色背景 */
+            color: #d1d4dc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 20px;
             display: flex;
             flex-direction: column;
+            height: 95vh;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-        }
-
-        h1 {
-            color: #f0b90b; /* 币安黄 */
-            margin-bottom: 30px;
-            text-shadow: 0 0 10px rgba(240, 185, 11, 0.3);
-        }
-
-        /* 卡片容器 */
-        .container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            width: 100%;
-            max-width: 1000px;
-        }
-
-        /* 单个币种卡片 */
-        .card {
-            background-color: #1e1e1e;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            border: 1px solid #333;
-            transition: transform 0.2s;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            border-color: #f0b90b;
-        }
-
-        .symbol {
-            font-size: 1.5em;
-            font-weight: bold;
             margin-bottom: 10px;
-            display: block;
         }
 
-        .price {
-            font-size: 2em;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-
-        .change {
-            font-size: 1.1em;
-            padding: 5px 10px;
+        h2 { margin: 0; color: #f0b90b; }
+        
+        .controls button {
+            background: #2a2e39;
+            border: 1px solid #434651;
+            color: white;
+            padding: 5px 15px;
+            cursor: pointer;
             border-radius: 4px;
-            display: inline-block;
         }
 
-        /* 涨跌颜色 */
-        .up { color: #0ecb81; } /* 涨 - 绿色 */
-        .down { color: #f6465d; } /* 跌 - 红色 */
-        
-        .bg-up { background-color: rgba(14, 203, 129, 0.1); color: #0ecb81; }
-        .bg-down { background-color: rgba(246, 70, 93, 0.1); color: #f6465d; }
+        .controls button:hover { background: #363a45; }
 
-        .loading {
-            text-align: center;
-            color: #666;
-            margin-top: 50px;
+        /* 主图表容器 */
+        #chart-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border: 1px solid #2a2e39;
+        }
+
+        /* 模拟订单流热力图的覆盖层 (简化版) */
+        .heatmap-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* 让鼠标事件穿透到图表 */
+            opacity: 0.3;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 19px,
+                rgba(255, 255, 255, 0.05) 20px
+            );
         }
         
-        .footer {
-            margin-top: 50px;
-            font-size: 0.8em;
-            color: #555;
+        .info-panel {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #787b86;
         }
     </style>
 </head>
 <body>
 
-    <h1>🚀 极简实时行情 (Binance)</h1>
+    <header>
+        <h2>BTC/USDT 订单流视图</h2>
+        <div class="controls">
+            <button onclick="alert('这是演示版本，真实数据需要接入WebSocket')">连接实时数据</button>
+        </div>
+    </header>
 
-    <div id="app" class="container">
-        <div class="loading">正在连接交易所数据...</div>
+    <div id="chart-container">
+        <!-- 图表将在这里渲染 -->
     </div>
 
-    <div class="footer">数据每3秒自动刷新 | 来源: Binance Public API</div>
+    <div class="info-panel">
+        * 绿色代表主动买入强劲，红色代表主动卖出强劲。右侧直方图模拟成交量分布 (Volume Profile)。
+    </div>
 
     <script>
-        // 你想监控的币种列表 (USDT本位)
-        const symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT'];
+        // 1. 初始化图表
+        const chartContainer = document.getElementById('chart-container');
+        const chart = LightweightCharts.createChart(chartContainer, {
+            layout: {
+                background: { type: 'solid', color: '#131722' },
+                textColor: '#d1d4dc',
+            },
+            grid: {
+                vertLines: { color: '#2B2B43' },
+                horzLines: { color: '#2B2B43' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+            },
+            priceScale: {
+                borderColor: '#485c7b',
+            },
+            timeScale: {
+                borderColor: '#485c7b',
+                timeVisible: true,
+            },
+        });
 
-        async function fetchData() {
-            const app = document.getElementById('app');
+        // 2. 添加 K 线系列
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#26a69a',
+            downColor: '#ef5350',
+            borderVisible: false,
+            wickUpColor: '#26a69a',
+            wickDownColor: '#ef5350',
+        });
+
+        // 3. 生成模拟数据 (真实场景需替换为 API 数据)
+        // 这里的逻辑是生成一段随机的 K 线，并附带模拟的 Delta (买卖差)
+        function generateData() {
+            let data = [];
+            let time = new Date(Date.now() - 100 * 60 * 60 * 1000).getTime() / 1000; // 100小时前
+            let open = 60000;
             
-            try {
-                // 使用币安公共API获取24小时行情
-                const response = await fetch('https://api.binance.com/api/v3/ticker/24hr');
-                const data = await response.json();
+            for (let i = 0; i < 100; i++) {
+                let up = Math.random() > 0.5;
+                let close = up ? open + Math.random() * 100 : open - Math.random() * 100;
+                let high = Math.max(open, close) + Math.random() * 50;
+                let low = Math.min(open, close) - Math.random() * 50;
+                
+                // 模拟 Delta: 正数为买盘强，负数为卖盘强
+                // 我们用这个值来决定 K 线的颜色深度或者额外的标记
+                let delta = (Math.random() - 0.5) * 1000; 
 
-                // 清空加载提示（如果是第一次加载）
-                if(app.innerText.includes("正在连接")) app.innerHTML = '';
-
-                // 过滤出我们关心的币种
-                const myCoins = data.filter(item => symbols.includes(item.symbol));
-
-                // 生成HTML
-                let htmlContent = '';
-                myCoins.forEach(coin => {
-                    const price = parseFloat(coin.lastPrice).toFixed(coin.symbol.includes('USDT') ? 2 : 4);
-                    const percent = parseFloat(coin.priceChangePercent).toFixed(2);
-                    const isUp = percent >= 0;
-                    const colorClass = isUp ? 'up' : 'down';
-                    const bgClass = isUp ? 'bg-up' : 'bg-down';
-                    const sign = isUp ? '+' : '';
-
-                    htmlContent += `
-                        <div class="card">
-                            <span class="symbol">${coin.symbol.replace('USDT', '')} / USDT</span>
-                            <div class="price ${colorClass}">$${price}</div>
-                            <div class="change ${bgClass}">
-                                ${sign}${percent}%
-                            </div>
-                        </div>
-                    `;
+                data.push({
+                    time: time + i * 3600,
+                    open: open,
+                    high: high,
+                    low: low,
+                    close: close,
+                    // 自定义字段，用于后续绘制热力图逻辑
+                    delta: delta 
                 });
-
-                app.innerHTML = htmlContent;
-
-            } catch (error) {
-                console.error('获取数据失败:', error);
-                // 如果出错，不要清空界面，保留旧数据或显示错误
-                if(app.innerHTML === '') {
-                     app.innerHTML = '<div class="loading" style="color:red">数据加载失败，请检查网络或稍后刷新。</div>';
-                }
+                open = close;
             }
+            return data;
         }
 
-        // 立即运行一次
-        fetchData();
+        const rawData = generateData();
+        // 格式化数据给 Lightweight Charts
+        const chartData = rawData.map(d => ({
+            time: d.time,
+            open: d.open,
+            high: d.high,
+            low: d.low,
+            close: d.close
+        }));
 
-        // 设置定时器，每3000毫秒（3秒）刷新一次
-        setInterval(fetchData, 3000);
+        candleSeries.setData(chartData);
+
+        // 4. 模拟 "足迹/热力" 效果
+        // 由于 Lightweight Charts 原生不支持 Footprint，我们用 Histogram (柱状图) 在底部模拟 Delta 力度
+        // 或者使用 Marker 在 K 线上标注大单
+        
+        const deltaSeries = chart.addHistogramSeries({
+            priceFormat: { type: 'volume' },
+            priceScaleId: '', // 设为空字符串，使其叠加在主图上，或者放在底部
+            scaleMargins: {
+                top: 0.8, // 把柱状图压到底部 20% 的区域
+                bottom: 0,
+            },
+        });
+
+        const deltaData = rawData.map(d => ({
+            time: d.time,
+            value: Math.abs(d.delta), // 柱子高度
+            color: d.delta > 0 ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)' // 绿买红卖
+        }));
+
+        deltaSeries.setData(deltaData);
+
+        // 5. 模拟右侧成交量分布 (Volume Profile)
+        // 这是一个简化的视觉欺骗，计算每个价格区间的出现次数
+        // 真实的 VP 需要遍历所有 Tick
+        const volumeProfile = [];
+        // 简单取几个关键价位模拟
+        [60000, 60100, 60200, 59900, 59800].forEach(price => {
+             // 这里的 logic 非常简化，仅作示意
+             // 实际应该统计该价格附近的成交量总和
+        });
+        
+        // 自动调整大小
+        window.addEventListener('resize', () => {
+            chart.applyOptions({ width: chartContainer.clientWidth, height: chartContainer.clientHeight });
+        });
+
     </script>
 </body>
 </html>
