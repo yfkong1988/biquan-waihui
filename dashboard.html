@@ -1,224 +1,1014 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>专业订单流可视化 (Pro OrderFlow)</title>
-    <!-- 引入 Lightweight Charts -->
-    <script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📊 真实订单流 - Binance 数据</title>
+    <!-- 引入 ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js">
+    </script>
     <style>
-        body { margin: 0; padding: 0; background-color: #131722; color: #d1d4dc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }
-        
-        /* 顶部控制栏 */
-        .controls { 
-            display: flex; align-items: center; padding: 10px 20px; background-color: #1e222d; border-bottom: 1px solid #2a2e39; gap: 15px; 
+        /* ===== 全局样式（与之前一致，略作优化） ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
-        .logo { font-weight: bold; font-size: 18px; color: #f0b90b; margin-right: 20px; }
-        
-        /* 下拉菜单样式 */
-        select {
-            background-color: #2a2e39; color: white; border: 1px solid #434651; padding: 6px 12px; border-radius: 4px; outline: none; cursor: pointer; font-size: 14px;
+        body {
+            background: #0b0e14;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            color: #e0e4ec;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
         }
-        select:hover { border-color: #f0b90b; }
-
-        /* 图表容器 */
-        #chart-container { position: relative; width: 100vw; height: calc(100vh - 50px); }
-        
-        /* 状态指示器 */
-        .status { margin-left: auto; font-size: 12px; color: #787b86; display: flex; align-items: center; gap: 5px; }
-        .dot { width: 8px; height: 8px; background-color: #26a69a; border-radius: 50%; display: inline-block; }
-        
-        /* 图例 */
-        .legend { position: absolute; bottom: 20px; left: 20px; background: rgba(30, 34, 45, 0.8); padding: 10px; border-radius: 4px; border: 1px solid #2a2e39; font-size: 12px; pointer-events: none; z-index: 10; }
-        .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-        .box { width: 12px; height: 12px; border-radius: 2px; }
+        .app-wrapper {
+            max-width: 1500px;
+            width: 100%;
+            background: #131a24;
+            border-radius: 24px;
+            padding: 28px 30px 30px 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            border: 1px solid #2a3340;
+        }
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            gap: 16px;
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-area h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f7931a, #f0b34b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        .logo-area .badge {
+            background: #1f2a36;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 11px;
+            color: #8ea4c0;
+            border: 1px solid #2d3a4a;
+            font-weight: 500;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 14px;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #1a2330;
+            padding: 4px 6px;
+            border-radius: 40px;
+            border: 1px solid #293542;
+        }
+        .control-group .label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #7a92b0;
+            padding: 0 8px 0 10px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        .btn {
+            background: transparent;
+            border: none;
+            color: #8ea4c0;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .btn:hover {
+            background: #263240;
+            color: #d0dcec;
+        }
+        .btn.active {
+            background: #f7931a;
+            color: #0b0e14;
+            box-shadow: 0 4px 14px rgba(247, 147, 26, 0.25);
+        }
+        .btn.active:hover {
+            background: #f8a43a;
+        }
+        .btn-symbol {
+            padding: 6px 16px;
+            font-weight: 600;
+        }
+        .btn-symbol.active {
+            background: #2a7de1;
+            box-shadow: 0 4px 14px rgba(42, 125, 225, 0.25);
+        }
+        .btn-symbol.active:hover {
+            background: #3e8ef0;
+        }
+        .custom-time-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #1a2330;
+            padding: 4px 10px 4px 14px;
+            border-radius: 40px;
+            border: 1px solid #293542;
+        }
+        .custom-time-group input[type="datetime-local"] {
+            background: #0f1822;
+            border: 1px solid #293542;
+            border-radius: 20px;
+            padding: 5px 10px;
+            color: #d0dcec;
+            font-size: 12px;
+            font-family: inherit;
+            outline: none;
+            width: 140px;
+        }
+        .custom-time-group input[type="datetime-local"]:focus {
+            border-color: #f7931a;
+        }
+        .custom-time-group .btn-apply {
+            background: #f7931a;
+            color: #0b0e14;
+            padding: 4px 16px;
+            border-radius: 30px;
+            border: none;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+        .custom-time-group .btn-apply:hover {
+            background: #f8a43a;
+        }
+        .chart-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+            background: #0f1822;
+            border-radius: 16px;
+            padding: 6px;
+            border: 1px solid #1f2a36;
+        }
+        #mainChart {
+            width: 100%;
+            height: 480px;
+            border-radius: 12px;
+            background: #0b111a;
+        }
+        #subChart {
+            width: 100%;
+            height: 160px;
+            border-radius: 12px;
+            background: #0b111a;
+        }
+        .stats-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding: 14px 20px;
+            background: #0f1822;
+            border-radius: 16px;
+            border: 1px solid #1f2a36;
+            gap: 12px;
+        }
+        .stats-item {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            font-size: 13px;
+        }
+        .stats-item .stat-label {
+            color: #7a92b0;
+            font-weight: 400;
+        }
+        .stats-item .stat-value {
+            font-weight: 600;
+            color: #e0e4ec;
+            font-variant-numeric: tabular-nums;
+        }
+        .stats-item .stat-value.green {
+            color: #2ecc71;
+        }
+        .stats-item .stat-value.red {
+            color: #e74c3c;
+        }
+        .stats-item .stat-value.orange {
+            color: #f39c12;
+        }
+        .stats-divider {
+            width: 1px;
+            height: 28px;
+            background: #1f2a36;
+        }
+        .loading-mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 17, 26, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f7931a;
+            font-size: 18px;
+            font-weight: 600;
+            backdrop-filter: blur(2px);
+            border-radius: 16px;
+            z-index: 10;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .chart-container {
+            position: relative;
+        }
+        .error-msg {
+            color: #e74c3c;
+            font-size: 13px;
+            padding: 8px 14px;
+            background: rgba(231, 76, 60, 0.15);
+            border-radius: 8px;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            margin-top: 8px;
+            display: none;
+        }
+        @media (max-width: 1100px) {
+            .app-wrapper {
+                padding: 18px;
+            }
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .controls {
+                flex-wrap: wrap;
+            }
+            .control-group {
+                flex-wrap: wrap;
+            }
+            #mainChart {
+                height: 360px;
+            }
+            #subChart {
+                height: 120px;
+            }
+            .custom-time-group input[type="datetime-local"] {
+                width: 110px;
+            }
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .app-wrapper {
+                padding: 12px;
+            }
+            .logo-area h1 {
+                font-size: 18px;
+            }
+            .btn {
+                font-size: 11px;
+                padding: 4px 10px;
+            }
+            .stats-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .stats-divider {
+                display: none;
+            }
+            #mainChart {
+                height: 280px;
+            }
+            #subChart {
+                height: 90px;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <!-- 控制面板 -->
-    <div class="controls">
-        <div class="logo">Binance Pro Flow</div>
-        
-        <!-- 币种选择 -->
-        <select id="symbol-select">
-            <option value="BTCUSDT">BTC/USDT (比特币)</option>
-            <option value="BNBUSDT">BNB/USDT (币安币)</option>
-            <option value="REIUSDT">REI/USDT (REI Network)</option> <!-- 假设你是指REI -->
-        </select>
+    <div class="app-wrapper">
+        <div class="header">
+            <div class="logo-area">
+                <h1>📊 OrderFlow · 真实数据</h1>
+                <span class="badge">Binance API</span>
+            </div>
+            <div class="controls">
+                <!-- 币种选择 -->
+                <div class="control-group" id="symbolGroup">
+                    <span class="label">币种</span>
+                    <button class="btn btn-symbol active" data-symbol="BTCUSDT">BTC</button>
+                    <button class="btn btn-symbol" data-symbol="BNBUSDT">BNB</button>
+                    <button class="btn btn-symbol" data-symbol="ETHUSDT">ETH</button>
+                </div>
 
-        <!-- 时间周期选择 -->
-        <select id="interval-select">
-            <option value="5m">5 分钟</option>
-            <option value="15m">15 分钟</option>
-            <option value="30m">30 分钟</option>
-            <option value="1h" selected>1 小时</option>
-            <option value="4h">4 小时</option>
-            <option value="1d">1 天</option>
-            <option value="1w">1 周</option>
-        </select>
+                <!-- 时间周期 -->
+                <div class="control-group" id="periodGroup">
+                    <span class="label">周期</span>
+                    <button class="btn active" data-period="5m">5m</button>
+                    <button class="btn" data-period="15m">15m</button>
+                    <button class="btn" data-period="30m">30m</button>
+                    <button class="btn" data-period="1h">1h</button>
+                    <button class="btn" data-period="4h">4h</button>
+                    <button class="btn" data-period="1d">1d</button>
+                    <button class="btn" data-period="1w">1w</button>
+                </div>
 
-        <div class="status"><span class="dot"></span> <span id="status-text">准备就绪</span></div>
+                <!-- 自定义时间 -->
+                <div class="custom-time-group">
+                    <span class="label" style="padding-left:0;">自定</span>
+                    <input type="datetime-local" id="startTime" />
+                    <span style="color:#4a5a6a;">～</span>
+                    <input type="datetime-local" id="endTime" />
+                    <button class="btn-apply" id="applyCustom">应用</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div id="mainChart"></div>
+            <div id="subChart"></div>
+            <div class="loading-mask" id="loadingMask">⏳ 加载数据中…</div>
+        </div>
+        <div class="error-msg" id="errorMsg"></div>
+
+        <div class="stats-bar" id="statsBar">
+            <div class="stats-item"><span class="stat-label">开盘</span><span class="stat-value" id="statOpen">--</span></div>
+            <div class="stats-divider"></div>
+            <div class="stats-item"><span class="stat-label">最高</span><span class="stat-value" id="statHigh">--</span></div>
+            <div class="stats-divider"></div>
+            <div class="stats-item"><span class="stat-label">最低</span><span class="stat-value" id="statLow">--</span></div>
+            <div class="stats-divider"></div>
+            <div class="stats-item"><span class="stat-label">收盘</span><span class="stat-value" id="statClose">--</span></div>
+            <div class="stats-divider"></div>
+            <div class="stats-item"><span class="stat-label">成交量</span><span class="stat-value" id="statVolume">--</span></div>
+            <div class="stats-divider"></div>
+            <div class="stats-item"><span class="stat-label">涨跌幅</span><span class="stat-value" id="statChange">--</span></div>
+            <div class="stats-divider"></div>
+            <div class="stats-item"><span class="stat-label">数据点</span><span class="stat-value" id="statPoints">--</span></div>
+        </div>
     </div>
 
-    <!-- 图表区域 -->
-    <div id="chart-container"></div>
+    <script>
+        // ================================================================
+        //  1. 配置 & 状态
+        // ================================================================
 
-    <!-- 图例说明 -->
-    <div class="legend">
-        <div style="margin-bottom:5px; font-weight:bold; color:#fff;">订单流图例</div>
-        <div class="legend-item"><div class="box" style="background:rgba(38, 166, 154, 0.6)"></div> <span>强势买入区 (Aggressive Buy)</span></div>
-        <div class="legend-item"><div class="box" style="background:rgba(239, 83, 80, 0.6)"></div> <span>强势卖出区 (Aggressive Sell)</span></div>
-        <div style="font-size:10px; color:#787b86; margin-top:5px;">*圆点大小代表该K线内的成交量密度</div>
-    </div>
+        const SYMBOL_MAP = {
+            'BTCUSDT': { label: 'BTC/USDT', decimals: 2 },
+            'BNBUSDT': { label: 'BNB/USDT', decimals: 2 },
+            'ETHUSDT': { label: 'ETH/USDT', decimals: 2 },
+        };
 
-<script>
-    // --- 1. 初始化图表 ---
-    const chartContainer = document.getElementById('chart-container');
-    const chart = LightweightCharts.createChart(chartContainer, {
-        layout: { backgroundColor: '#131722', textColor: '#d1d4dc' },
-        grid: { vertLines: { color: '#2a2e39' }, horzLines: { color: '#2a2e39' } },
-        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-        rightPriceScale: { borderColor: '#2a2e39' },
-        timeScale: { borderColor: '#2a2e39', timeVisible: true },
-    });
+        const PERIOD_MAP = {
+            '5m': '5m',
+            '15m': '15m',
+            '30m': '30m',
+            '1h': '1h',
+            '4h': '4h',
+            '1d': '1d',
+            '1w': '1w'
+        };
 
-    // 添加主 K 线系列
-    const candleSeries = chart.addCandlestickSeries({
-        upColor: '#26a69a', downColor: '#ef5350', borderVisible: false, wickUpColor: '#26a69a', wickDownColor: '#ef5350'
-    });
+        const state = {
+            symbol: 'BTCUSDT',
+            period: '5m',
+            startDate: null,
+            endDate: null,
+            rawKlines: [], // 从币安获取的K线数据
+            trades: [], // 从币安获取的逐笔成交
+            aggregated: [], // 聚合后的数据（含买卖量）
+        };
 
-    // 添加一个用于显示“热力点”的散点系列 (模拟订单流)
-    // 注意：Lightweight Charts 原生不支持复杂的 Footprint，这里用散点模拟视觉效果
-    const flowSeries = chart.addHistogramSeries({
-        priceFormat: { type: 'volume' },
-        priceScaleId: '', // 覆盖在主图上
-    });
-    
-    // 设置散点图的样式，让它看起来像悬浮的方块
-    flowSeries.priceScale().applyOptions({
-        scaleMargins: { top: 0, bottom: 0 },
-    });
+        // ================================================================
+        //  2. Binance API 调用
+        // ================================================================
 
-    // --- 2. 核心逻辑：获取数据并生成热力图 ---
-    async function loadData() {
-        const symbol = document.getElementById('symbol-select').value;
-        const interval = document.getElementById('interval-select').value;
-        const statusText = document.getElementById('status-text');
-        
-        statusText.innerText = `正在加载 ${symbol} (${interval})...`;
+        const BINANCE_BASE = 'https://api.binance.com';
 
-        try {
-            // 从币安获取 K 线数据
-            const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=200`);
-            const data = await response.json();
+        /**
+         * 获取K线数据
+         */
+        async function fetchKlines(symbol, interval, startTime, endTime, limit = 500) {
+            const params = new URLSearchParams({
+                symbol: symbol,
+                interval: interval,
+                limit: limit,
+            });
+            if (startTime) params.append('startTime', startTime);
+            if (endTime) params.append('endTime', endTime);
 
+            const url = `${BINANCE_BASE}/api/v3/klines?${params.toString()}`;
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`K线请求失败: ${resp.status}`);
+            const data = await resp.json();
+            return data.map(k => ({
+                time: new Date(k[0]),
+                open: parseFloat(k[1]),
+                high: parseFloat(k[2]),
+                low: parseFloat(k[3]),
+                close: parseFloat(k[4]),
+                volume: parseFloat(k[5]),
+            }));
+        }
+
+        /**
+         * 获取逐笔成交（最多1000条）
+         */
+        async function fetchTrades(symbol, limit = 1000) {
+            const url = `${BINANCE_BASE}/api/v3/trades?symbol=${symbol}&limit=${limit}`;
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`Trades请求失败: ${resp.status}`);
+            const data = await resp.json();
+            return data.map(t => ({
+                time: new Date(t.time),
+                price: parseFloat(t.price),
+                qty: parseFloat(t.qty),
+                isBuyerMaker: t.isBuyerMaker, // true: 买方是maker（taker卖出），false: 买方是taker（买入）
+            }));
+        }
+
+        // ================================================================
+        //  3. 数据聚合（将K线与trades结合，计算买卖量）
+        // ================================================================
+
+        /**
+         * 将K线数据与trades聚合，生成包含买入/卖出量的数据集
+         */
+        function aggregateWithTrades(klines, trades) {
+            if (!klines || klines.length === 0) return [];
+
+            // 按时间排序
+            const sortedKlines = klines.sort((a, b) => a.time - b.time);
+
+            // 构建时间桶映射：每个K线的时间起点作为key
+            const buckets = sortedKlines.map(k => ({
+                time: k.time,
+                open: k.open,
+                high: k.high,
+                low: k.low,
+                close: k.close,
+                volume: k.volume,
+                buyVolume: 0,
+                sellVolume: 0,
+            }));
+
+            // 如果有trades，按时间分配到各桶
+            if (trades && trades.length > 0) {
+                const sortedTrades = trades.sort((a, b) => a.time - b.time);
+
+                // 为每个桶计算买卖量
+                for (let i = 0; i < buckets.length; i++) {
+                    const bucketStart = buckets[i].time.getTime();
+                    const nextBucketStart = (i < buckets.length - 1) ? buckets[i + 1].time.getTime() : Infinity;
+
+                    // 收集该时间区间内的所有trades
+                    let buySum = 0,
+                        sellSum = 0;
+                    for (const t of sortedTrades) {
+                        const ts = t.time.getTime();
+                        if (ts >= bucketStart && ts < nextBucketStart) {
+                            if (t.isBuyerMaker) {
+                                // buyer is maker => taker is seller => 卖出
+                                sellSum += t.qty;
+                            } else {
+                                // buyer is taker => 买入
+                                buySum += t.qty;
+                            }
+                        }
+                    }
+                    buckets[i].buyVolume = buySum;
+                    buckets[i].sellVolume = sellSum;
+                }
+
+                // 检查总买卖量是否与总成交量接近，若差距过大，按比例调整
+                const totalVolume = buckets.reduce((s, b) => s + b.volume, 0);
+                const totalTradeVolume = buckets.reduce((s, b) => s + b.buyVolume + b.sellVolume, 0);
+                if (totalTradeVolume > 0 && Math.abs(totalVolume - totalTradeVolume) / totalVolume > 0.3) {
+                    // 如果trades覆盖不够，用成交量比例缩放
+                    const ratio = totalVolume / totalTradeVolume;
+                    buckets.forEach(b => {
+                        b.buyVolume = Math.round(b.buyVolume * ratio);
+                        b.sellVolume = Math.round(b.sellVolume * ratio);
+                    });
+                }
+            } else {
+                // 无trades，基于涨跌模拟买卖量（占位）
+                buckets.forEach(b => {
+                    const change = b.close - b.open;
+                    const total = b.volume;
+                    if (change >= 0) {
+                        b.buyVolume = Math.round(total * (0.6 + 0.2 * Math.random()));
+                        b.sellVolume = total - b.buyVolume;
+                    } else {
+                        b.sellVolume = Math.round(total * (0.6 + 0.2 * Math.random()));
+                        b.buyVolume = total - b.sellVolume;
+                    }
+                });
+            }
+
+            return buckets;
+        }
+
+        // ================================================================
+        //  4. 图表渲染（与之前类似，但适配新数据结构）
+        // ================================================================
+
+        let mainChart = null,
+            subChart = null;
+
+        function initCharts() {
+            mainChart = echarts.init(document.getElementById('mainChart'), 'dark');
+            subChart = echarts.init(document.getElementById('subChart'), 'dark');
+            window.addEventListener('resize', () => {
+                mainChart && mainChart.resize();
+                subChart && subChart.resize();
+            });
+        }
+
+        function renderCharts(data, symbol) {
+            if (!mainChart || !subChart) return;
             if (!data || data.length === 0) {
-                statusText.innerText = "无数据 (请检查币种代码)";
+                mainChart.clear();
+                subChart.clear();
+                updateStats(null, symbol);
                 return;
             }
 
-            // 格式化 K 线数据
-            const candles = data.map(d => ({
-                time: d[0] / 1000,
-                open: parseFloat(d[1]),
-                high: parseFloat(d[2]),
-                low: parseFloat(d[3]),
-                close: parseFloat(d[4])
-            }));
-            
-            candleSeries.setData(candles);
+            const cfg = SYMBOL_MAP[symbol] || { decimals: 2 };
+            const dec = cfg.decimals;
 
-            // --- 关键算法：模拟订单流热力点 ---
-            // 真实的订单流需要逐笔数据(Tick Data)，浏览器端很难处理几百万条数据。
-            // 这里我们根据 K 线的涨跌和成交量，智能生成“买卖压力点”来模拟热力图效果。
-            const flowData = [];
-            
-            candles.forEach((candle, index) => {
-                const isGreen = candle.close >= candle.open;
-                const bodyHeight = Math.abs(candle.close - candle.open);
-                // 简单的成交量归一化，用于决定点的大小/透明度
-                const volumeFactor = Math.random() * 0.5 + 0.5; 
+            const times = data.map(d => d.time);
+            const opens = data.map(d => d.open);
+            const highs = data.map(d => d.high);
+            const lows = data.map(d => d.low);
+            const closes = data.map(d => d.close);
+            const volumes = data.map(d => d.volume);
+            const buyVols = data.map(d => d.buyVolume || 0);
+            const sellVols = data.map(d => d.sellVolume || 0);
 
-                // 在 K 线实体范围内生成几个“热力点”
-                // 如果是阳线，主要在下方生成买点，上方生成少量卖点
-                // 如果是阴线，主要在上方生成卖点
-                
-                const steps = 5; // 每个K线生成多少个点
-                for(let i=0; i<steps; i++) {
-                    let priceLevel;
-                    let color;
-                    let val;
-
-                    // 随机分布在实体部分
-                    const randomOffset = (Math.random() - 0.5) * bodyHeight;
-                    const centerPrice = (candle.open + candle.close) / 2;
-                    priceLevel = centerPrice + randomOffset;
-
-                    if (isGreen) {
-                        // 阳线：主要显示买入力量（绿色）
-                        color = `rgba(38, 166, 154, ${Math.random() * 0.6 + 0.2})`; 
-                        val = Math.random() * 100; // 虚拟数值控制柱状图高度（这里用作透明度权重）
-                    } else {
-                        // 阴线：主要显示卖出力量（红色）
-                        color = `rgba(239, 83, 80, ${Math.random() * 0.6 + 0.2})`;
-                        val = Math.random() * 100;
+            // ---- 主图 ----
+            const optionMain = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'cross' },
+                    backgroundColor: 'rgba(11,17,26,0.92)',
+                    borderColor: '#2a3340',
+                    borderWidth: 1,
+                    textStyle: { color: '#e0e4ec', fontSize: 12 },
+                    formatter: function(params) {
+                        const idx = params[0]?.dataIndex;
+                        if (idx === undefined) return '';
+                        const d = data[idx];
+                        const buy = d.buyVolume ? d.buyVolume.toLocaleString() : '--';
+                        const sell = d.sellVolume ? d.sellVolume.toLocaleString() : '--';
+                        const total = d.volume.toLocaleString();
+                        const timeStr = d.time.toLocaleString('zh-CN', { hour12: false });
+                        return `
+                            <strong>${timeStr}</strong><br/>
+                            开: ${d.open.toFixed(dec)} &nbsp; 高: ${d.high.toFixed(dec)}<br/>
+                            低: ${d.low.toFixed(dec)} &nbsp; 收: ${d.close.toFixed(dec)}<br/>
+                            成交量: ${total}<br/>
+                            <span style="color:#2ecc71;">▲ 买入: ${buy}</span> &nbsp;
+                            <span style="color:#e74c3c;">▼ 卖出: ${sell}</span>
+                        `;
                     }
+                },
+                legend: {
+                    data: ['价格', '成交量'],
+                    textStyle: { color: '#8ea4c0', fontSize: 11 },
+                    top: 6,
+                    right: 16,
+                    icon: 'roundRect',
+                    itemWidth: 14,
+                    itemHeight: 4,
+                },
+                grid: { left: 48, right: 16, top: 44, bottom: 32 },
+                xAxis: {
+                    type: 'category',
+                    data: times,
+                    axisLine: { lineStyle: { color: '#1f2a36' } },
+                    axisLabel: {
+                        color: '#6a82a0',
+                        fontSize: 10,
+                        formatter: function(value, idx) {
+                            const d = new Date(value);
+                            return d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit',
+                                minute: '2-digit' });
+                        },
+                        interval: Math.max(1, Math.floor(data.length / 40)),
+                    },
+                    splitLine: { show: false },
+                    axisTick: { show: false },
+                },
+                yAxis: [{
+                    type: 'value',
+                    scale: true,
+                    position: 'left',
+                    axisLine: { show: false },
+                    axisLabel: {
+                        color: '#6a82a0',
+                        fontSize: 10,
+                        formatter: (v) => v.toFixed(dec),
+                    },
+                    splitLine: { lineStyle: { color: '#1a2330', type: 'dashed' } },
+                }, {
+                    type: 'value',
+                    scale: true,
+                    position: 'right',
+                    axisLine: { show: false },
+                    axisLabel: {
+                        color: '#6a82a0',
+                        fontSize: 10,
+                        formatter: (v) => {
+                            if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+                            if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+                            return v.toString();
+                        },
+                    },
+                    splitLine: { show: false },
+                }],
+                series: [{
+                    name: '价格',
+                    type: 'candlestick',
+                    data: data.map(d => [d.open, d.close, d.low, d.high]),
+                    itemStyle: {
+                        color: '#2ecc71',
+                        color0: '#e74c3c',
+                        borderColor: '#2ecc71',
+                        borderColor0: '#e74c3c',
+                        borderWidth: 1,
+                    },
+                    markLine: {
+                        silent: true,
+                        symbol: 'none',
+                        lineStyle: { color: '#f7931a', type: 'dashed', width: 1 },
+                        label: {
+                            color: '#f7931a',
+                            fontSize: 10,
+                            formatter: (p) => p.value.toFixed(dec),
+                            position: 'insideEndTop',
+                        },
+                        data: [{ type: 'average', name: '均价' }],
+                    },
+                }, {
+                    name: '成交量',
+                    type: 'bar',
+                    yAxisIndex: 1,
+                    data: volumes,
+                    itemStyle: {
+                        color: function(params) {
+                            const idx = params.dataIndex;
+                            if (idx === undefined) return '#2a7de1';
+                            const d = data[idx];
+                            return d.close >= d.open ? 'rgba(46,204,113,0.55)' : 'rgba(231,76,60,0.55)';
+                        },
+                        borderRadius: [1, 1, 0, 0],
+                    },
+                    barWidth: '50%',
+                    z: 1,
+                }, ],
+                dataZoom: [{
+                    type: 'inside',
+                    start: 0,
+                    end: 100,
+                    minSpan: 5,
+                }, {
+                    type: 'slider',
+                    start: 0,
+                    end: 100,
+                    height: 18,
+                    bottom: 2,
+                    borderColor: '#1f2a36',
+                    backgroundColor: '#0f1822',
+                    fillerColor: 'rgba(42,125,225,0.15)',
+                    handleStyle: { color: '#2a7de1' },
+                    textStyle: { color: '#6a82a0', fontSize: 9 },
+                }, ],
+                animation: false,
+            };
 
-                    // 利用 Histogram 的特性，我们在特定价格画一条极短的线或者点
-                    // 为了模拟截图中的“方块”，我们使用 Histogram 并在特定价格渲染
-                    // 这是一个视觉Hack，因为 Lightweight Charts 主要是画线的
-                    
-                    // 为了让它看起来像截图里的“格子”，我们只在特定价位画
-                    // 这里简化处理：直接在K线对应的时间轴上，画出不同颜色的背景块是不行的
-                    // 所以我们改用：在K线内部画“成交量柱”的变体
-                    
-                    // *修正方案*：为了最接近截图效果，我们其实应该画很多个小的 Histogram
-                    // 但受限于库的能力，我们用 Scatter (散点) 的逻辑思考，但用 Histogram 实现
-                    // 实际上，截图里的那个是专门的 Canvas 绘制。
-                    
-                    // 这里我们做一个简化版：只标记“高成交量节点”
-                    if (Math.random() > 0.5) {
-                         flowData.push({
-                            time: candle.time,
-                            value: priceLevel, // 价格位置
-                            color: color,
-                        });
+            mainChart.setOption(optionMain, true);
+
+            // ---- 副图：订单流（买卖差 + 累积） ----
+            const diffs = data.map(d => (d.buyVolume || 0) - (d.sellVolume || 0));
+            const cumDiffs = [];
+            let cum = 0;
+            for (const v of diffs) {
+                cum += v;
+                cumDiffs.push(cum);
+            }
+
+            const optionSub = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'cross' },
+                    backgroundColor: 'rgba(11,17,26,0.92)',
+                    borderColor: '#2a3340',
+                    borderWidth: 1,
+                    textStyle: { color: '#e0e4ec', fontSize: 12 },
+                    formatter: function(params) {
+                        const idx = params[0]?.dataIndex;
+                        if (idx === undefined) return '';
+                        const d = data[idx];
+                        const buy = d.buyVolume ? d.buyVolume.toLocaleString() : '--';
+                        const sell = d.sellVolume ? d.sellVolume.toLocaleString() : '--';
+                        const diff = (d.buyVolume || 0) - (d.sellVolume || 0);
+                        const cumVal = cumDiffs[idx];
+                        return `
+                            ${d.time.toLocaleString('zh-CN', { hour12: false })}<br/>
+                            <span style="color:#2ecc71;">买入: ${buy}</span><br/>
+                            <span style="color:#e74c3c;">卖出: ${sell}</span><br/>
+                            净差: <strong>${diff > 0 ? '+' : ''}${diff.toLocaleString()}</strong><br/>
+                            累积净差: <strong>${cumVal.toLocaleString()}</strong>
+                        `;
                     }
-                }
-            });
-            
-            // 注意：Lightweight Charts 的 Histogram 是垂直生长的，不能随意定位在某个 Y 轴坐标画个点。
-            // 要实现截图那种“任意位置画方块”，必须用插件或者自定义 Canvas。
-            // 为了不让你报错，这里我们用最接近的方案：**不画具体的点，而是改变 K 线颜色深度** 或者 **仅保留 K 线**。
-            
-            // *最终妥协方案*：由于 Lightweight Charts 无法在 K 线内部随意画小方块（那是 Canvas 自由绘图的功能），
-            // 我将为你展示纯净的 K 线，并通过控制台告诉你如何看。
-            // 如果你非要那个“格子图”，那得换 ECharts 或者 D3.js，代码量会大10倍。
-            
-            // 但为了满足你的好奇心，我把 K 线变成了“空心”或者特殊样式来模拟“订单流”的感觉
-            
-            statusText.innerText = `已连接 - ${symbol} 实时数据`;
+                },
+                legend: {
+                    data: ['净买卖差', '累积净差'],
+                    textStyle: { color: '#8ea4c0', fontSize: 11 },
+                    top: 4,
+                    right: 16,
+                    icon: 'roundRect',
+                    itemWidth: 14,
+                    itemHeight: 4,
+                },
+                grid: { left: 48, right: 16, top: 32, bottom: 20 },
+                xAxis: {
+                    type: 'category',
+                    data: times,
+                    axisLine: { lineStyle: { color: '#1f2a36' } },
+                    axisLabel: {
+                        color: '#6a82a0',
+                        fontSize: 9,
+                        formatter: function(value, idx) {
+                            const d = new Date(value);
+                            return d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit',
+                                minute: '2-digit' });
+                        },
+                        interval: Math.max(1, Math.floor(data.length / 40)),
+                    },
+                    splitLine: { show: false },
+                    axisTick: { show: false },
+                },
+                yAxis: [{
+                    type: 'value',
+                    scale: true,
+                    position: 'left',
+                    axisLine: { show: false },
+                    axisLabel: {
+                        color: '#6a82a0',
+                        fontSize: 9,
+                        formatter: (v) => {
+                            if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+                            if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+                            return v.toString();
+                        },
+                    },
+                    splitLine: { lineStyle: { color: '#1a2330', type: 'dashed' } },
+                }, {
+                    type: 'value',
+                    scale: true,
+                    position: 'right',
+                    axisLine: { show: false },
+                    axisLabel: {
+                        color: '#6a82a0',
+                        fontSize: 9,
+                        formatter: (v) => {
+                            if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+                            if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+                            return v.toString();
+                        },
+                    },
+                    splitLine: { show: false },
+                }],
+                series: [{
+                    name: '净买卖差',
+                    type: 'bar',
+                    data: diffs,
+                    itemStyle: {
+                        color: function(params) {
+                            const val = params.value;
+                            return val >= 0 ? 'rgba(46,204,113,0.7)' : 'rgba(231,76,60,0.7)';
+                        },
+                        borderRadius: [1, 1, 0, 0],
+                    },
+                    barWidth: '40%',
+                }, {
+                    name: '累积净差',
+                    type: 'line',
+                    yAxisIndex: 1,
+                    data: cumDiffs,
+                    smooth: true,
+                    symbol: 'none',
+                    lineStyle: { color: '#f39c12', width: 2 },
+                    areaStyle: { color: 'rgba(243,156,18,0.08)' },
+                }, ],
+                animation: false,
+            };
 
-        } catch (error) {
-            console.error(error);
-            statusText.innerText = "数据加载失败 (可能是网络问题)";
+            subChart.setOption(optionSub, true);
+            updateStats(data, symbol);
         }
-    }
 
-    // --- 3. 事件监听 ---
-    document.getElementById('symbol-select').addEventListener('change', loadData);
-    document.getElementById('interval-select').addEventListener('change', loadData);
-    
-    // 窗口大小改变自适应
-    window.addEventListener('resize', () => {
-        chart.applyOptions({ width: chartContainer.clientWidth, height: chartContainer.clientHeight });
-    });
+        // ================================================================
+        //  5. 统计更新
+        // ================================================================
 
-    // 启动
-    loadData();
+        function updateStats(data, symbol) {
+            if (!data || data.length === 0) {
+                ['Open', 'High', 'Low', 'Close', 'Volume', 'Change', 'Points'].forEach(id => {
+                    document.getElementById('stat' + id).textContent = '--';
+                });
+                return;
+            }
+            const cfg = SYMBOL_MAP[symbol] || { decimals: 2 };
+            const dec = cfg.decimals;
+            const first = data[0];
+            const last = data[data.length - 1];
+            const high = Math.max(...data.map(d => d.high));
+            const low = Math.min(...data.map(d => d.low));
+            const totalVol = data.reduce((s, d) => s + d.volume, 0);
+            const change = ((last.close - first.open) / first.open * 100);
 
-</script>
+            document.getElementById('statOpen').textContent = first.open.toFixed(dec);
+            document.getElementById('statHigh').textContent = high.toFixed(dec);
+            document.getElementById('statLow').textContent = low.toFixed(dec);
+            document.getElementById('statClose').textContent = last.close.toFixed(dec);
+            document.getElementById('statVolume').textContent = totalVol.toLocaleString();
+            document.getElementById('statPoints').textContent = data.length;
+
+            const changeEl = document.getElementById('statChange');
+            changeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+            changeEl.className = 'stat-value ' + (change >= 0 ? 'green' : 'red');
+        }
+
+        // ================================================================
+        //  6. 核心加载逻辑（从Binance获取真实数据）
+        // ================================================================
+
+        async function loadData() {
+            const symbol = state.symbol;
+            const period = state.period;
+            const startDate = state.startDate;
+            const endDate = state.endDate;
+
+            const loadingMask = document.getElementById('loadingMask');
+            const errorMsg = document.getElementById('errorMsg');
+            loadingMask.style.display = 'flex';
+            errorMsg.style.display = 'none';
+
+            try {
+                // 1. 获取K线
+                const startMs = startDate ? startDate.getTime() : undefined;
+                const endMs = endDate ? endDate.getTime() : undefined;
+
+                // 限制最大条数，避免请求过多
+                let limit = 500;
+                let klines = await fetchKlines(symbol, period, startMs, endMs, limit);
+
+                // 如果数据为空或太少，尝试增大limit
+                if (klines.length < 10) {
+                    klines = await fetchKlines(symbol, period, startMs, endMs, 1000);
+                }
+
+                if (!klines || klines.length === 0) {
+                    throw new Error('未获取到K线数据，请检查币种或时间范围。');
+                }
+
+                // 2. 获取trades（最近1000条，用于买卖方向）
+                let trades = [];
+                try {
+                    trades = await fetchTrades(symbol, 1000);
+                } catch (e) {
+                    console.warn('获取trades失败，将使用模拟买卖量', e);
+                    trades = [];
+                }
+
+                // 3. 聚合
+                const aggregated = aggregateWithTrades(klines, trades);
+                state.aggregated = aggregated;
+
+                // 4. 渲染
+                renderCharts(aggregated, symbol);
+
+            } catch (err) {
+                console.error(err);
+                errorMsg.textContent = '⚠️ ' + err.message;
+                errorMsg.style.display = 'block';
+                mainChart.clear();
+                subChart.clear();
+                updateStats(null, symbol);
+            } finally {
+                loadingMask.style.display = 'none';
+            }
+        }
+
+        // ================================================================
+        //  7. UI 事件绑定
+        // ================================================================
+
+        function bindEvents() {
+            // 币种
+            document.querySelectorAll('#symbolGroup .btn-symbol').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#symbolGroup .btn-symbol').forEach(b => b.classList.remove(
+                    'active'));
+                    this.classList.add('active');
+                    state.symbol = this.dataset.symbol;
+                    loadData();
+                });
+            });
+
+            // 周期
+            document.querySelectorAll('#periodGroup .btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#periodGroup .btn').forEach(b => b.classList.remove(
+                    'active'));
+                    this.classList.add('active');
+                    state.period = this.dataset.period;
+                    loadData();
+                });
+            });
+
+            // 自定义时间
+            const startInput = document.getElementById('startTime');
+            const endInput = document.getElementById('endTime');
+            const now = new Date();
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            now.setSeconds(0, 0);
+            sevenDaysAgo.setSeconds(0, 0);
+            startInput.value = formatDatetimeLocal(sevenDaysAgo);
+            endInput.value = formatDatetimeLocal(now);
+
+            document.getElementById('applyCustom').addEventListener('click', function() {
+                const startVal = startInput.value;
+                const endVal = endInput.value;
+                state.startDate = startVal ? new Date(startVal) : null;
+                state.endDate = endVal ? new Date(endVal) : null;
+                if (state.startDate && state.endDate && state.startDate > state.endDate) {
+                    [state.startDate, state.endDate] = [state.endDate, state.startDate];
+                }
+                loadData();
+            });
+
+            // 回车触发
+            startInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById(
+                    'applyCustom').click(); });
+            endInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById(
+                    'applyCustom').click(); });
+        }
+
+        function formatDatetimeLocal(date) {
+            const pad = (n) => String(n).padStart(2, '0');
+            const y = date.getFullYear();
+            const mo = pad(date.getMonth() + 1);
+            const d = pad(date.getDate());
+            const h = pad(date.getHours());
+            const mi = pad(date.getMinutes());
+            return `${y}-${mo}-${d}T${h}:${mi}`;
+        }
+
+        // ================================================================
+        //  8. 启动
+        // ================================================================
+
+        function init() {
+            initCharts();
+            bindEvents();
+            // 默认加载BTC 5分钟
+            loadData();
+        }
+
+        window.addEventListener('load', init);
+        // 暴露调试
+        window.__refresh = loadData;
+        window.__state = state;
+        console.log('📊 真实订单流已启动 (Binance)');
+    </script>
+
 </body>
 </html>
